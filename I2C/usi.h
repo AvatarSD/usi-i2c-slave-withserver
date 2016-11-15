@@ -25,7 +25,7 @@ public:
     static void clearStopCondIntFlag();
 
     static bool haveCollision();
-    static bool clearCollisionFlag();
+    static void clearCollisionFlag();
 
     static uint8_t counterValue();
     static void setCounterValue(uint8_t val);
@@ -64,10 +64,10 @@ public:
     static void toggleClockPortPin();
 
     //direct accses to pin's
-    static void holdSda();
-    static void releaseSda();
-    static void holdScl();
-    static void releaseScl();
+    static void holdDataLine();
+    static void releaseDataLine();
+    static void holdClockLine();
+    static void releaseClockLine();
 
 private:
     USI() {}
