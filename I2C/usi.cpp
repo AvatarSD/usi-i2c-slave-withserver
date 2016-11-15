@@ -65,8 +65,16 @@ uint8_t USI::counterValue()
 
 void USI::setCounterValue(uint8_t val)
 {
-    USISR &= ~ 0b1111;
-    USISR |= val & 0b1111;
+    cli();
+    //    USISR &= ~ 0b1111;
+    //    USISR |= val & 0b1111;
+
+    //    for(char i = 0; i < 4; i++)
+    //        if((val >> i) & 0b1) USISR |= _BV(i);
+    //        else USISR &= ~ _BV(i);
+
+    USISR = (USISR & ~0b00001111) | (val & 0b1111);
+    sei();
 }
 
 //control regs:
