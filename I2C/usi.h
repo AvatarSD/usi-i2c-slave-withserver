@@ -70,9 +70,9 @@ public:
     static void releaseScl();
 
 private:
-    USI();
-    USI(const USI &);
-    const USI &operator=(const USI &);
+    USI() {}
+    USI(const USI &) {}
+    USI &operator=(const USI &) = delete;
 };
 
 #endif
