@@ -1,63 +1,46 @@
-/**
- * Example sketch for writing to and reading from a slave in transactional
- * manner
- *
- * NOTE: You must not use delay() or I2C communications will fail, use
- * tws_delay() instead (or preferably some smarter timing system)
- *
- * On write the first byte received is considered the register addres to
- * modify/read
- * On each byte sent or read the register address is incremented (and it will
- * loop back to 0)
- *
- * You can try this with the Arduino I2C REPL sketch at
- * https://github.com/rambo/I2C/blob/master/examples/i2crepl/i2crepl.ino
- * If you have bus-pirate remember that the older revisions do not like the
- * slave streching the clock, this leads to all sorts of weird behaviour
- *
- * To read third value (register number 2 since counting starts at 0) send "[ 8
- * 2 [ 9 r ]", value read should be 0xBE
- * If you then send "[ 9 r r r ]" you should get 0xEF 0xDE 0xAD as response
- * (demonstrating the register counter looping back to zero)
- *
- * You need to have at least 8MHz clock on the ATTiny for this to work (and in
- * fact I have so far tested it only on ATTiny85 @8MHz using internal
- * oscillator)
- * Remember to "Burn bootloader" to make sure your chip is in correct mode
- */
-
-/**
- * Pin notes by Suovula, see also http://hlt.media.mit.edu/?p=1229
- *
- * DIP and SOIC have same pinout, however the SOIC chips are much cheaper,
-especially if you buy more than 5 at a time
- * For nice breakout boards see https://github.com/rambo/attiny_boards
- *
- * Basically the arduino pin numbers map directly to the PORTB bit numbers.
- *
-
+/*
+ * by S.D.
+ * avatarsd.com
  */
 
 #include "server.h"
 #include <usiTwiSlave.h>
-
-#define ADDRESS_ERR -1
-
-uint8_t I2C_SLAVE_ADDRESS = 0x4;
-
-volatile uint8_t i2c_regs[] = {
-    "When switching between tri-state ({DDxn, PORTxn} = 0b00) and output high "
-    "({DDxn, PORTxn} = 0b11), an intermediate state with either pull-up enabled "
-    "{DDxn, PORTxn} = 0b01) or output low ({DDxn, PORTxn} = 0b10) must occur.  SD"
-};
+#include <memory.h>
 
 
+#define I2C_SLAVE_ADDRESS 0x04
 
-// Tracks the current register pointer position
-volatile uint16_t reg_position;
-const uint16_t reg_size = sizeof(i2c_regs);
+I2CSlaveServer::I2CSlaveServer() : reg_size(memory::mapsize())
+{
+    device = UsiTwiSlave::getInstance();
+    reg_position = 0;
+}
 
-UsiTwiSlave * device;
+void I2CSlaveServer::setup()
+{
+    address = I2C_SLAVE_ADDRESS; //todo:: temp
+
+    device->init(address);
+    device->onReceiveSetHandler(&receivetIsrVec);
+    device->onRequestSetHandler(&requestIsrVec);
+
+}
+
+I2CSlaveServer * I2CSlaveServer::getInstance()
+{
+    static I2CSlaveServer server;
+    return &server;
+}
+
+int16_t I2CSlaveServer::requestIsrVec(uint8_t num)
+{
+    return getInstance()->requestEvent(num);
+}
+
+int8_t I2CSlaveServer::receivetIsrVec(uint8_t num, uint8_t data)
+{
+    return getInstance()->receiveEvent(num, data);
+}
 
 #if TWI_REQUIRE_BUFFERS
 /**
@@ -65,20 +48,20 @@ UsiTwiSlave * device;
  * of data (with TinyWireS.send) to the
  * send-buffer when using this callback
  */
-void requestEvent()
+void UsiTwiClientServer::requestEvent()
 {
     device->put(i2c_regs[reg_position++]);
     if(reg_position >= reg_size)
         reg_position = 0;
 }
 #else
-int16_t requestEvent(uint8_t num)
+int16_t I2CSlaveServer::requestEvent(uint8_t num)
 {
     if(reg_position >= reg_size) {
         reg_position = 0;
-        return ADDRESS_ERR;
+        return ERR;
     }
-    return i2c_regs[reg_position++];
+    return memory::read(reg_position++);
 }
 #endif
 
@@ -91,7 +74,7 @@ int16_t requestEvent(uint8_t num)
  * so be quick, set flags for long running tasks to be called from the mainloop
  * instead of running them directly,
  */
-void receiveEvent(uint8_t howMany)
+void UsiTwiClientServer::receiveEvent(uint8_t howMany)
 {
     reg_position = device->get();
     if(reg_position >= reg_size) return;
@@ -102,40 +85,26 @@ void receiveEvent(uint8_t howMany)
     }
 }
 #else
-int8_t receiveEvent(uint8_t num, uint8_t data)
+int8_t I2CSlaveServer::receiveEvent(uint8_t num, uint8_t data)
 {
     if(num == 0) {
         if(data < reg_size)
             reg_position = data;
         else
-            return -1;
-        return 0;
+            return ERR;
+        return OK;
     }
-    //    uint16_t pos = (uint16_t)reg_position + num-1;
-    //    if(pos >= reg_size) {
-    //        reg_position = 0;
-    //        return -1;
-    //    }
-
     if(reg_position >= reg_size) {
         reg_position = 0;
-        return ADDRESS_ERR;
+        return ERR;
     }
-    i2c_regs[reg_position++] = data;
-    return 0;
+    memory::write(reg_position++, data);
+    return OK;
 }
 #endif
 
 
-void setup()
-{
-    device = UsiTwiSlave::getInstance();
-    device->init(I2C_SLAVE_ADDRESS);
-    device->onReceiveSetHandler(&receiveEvent);
-    device->onRequestSetHandler(&requestEvent);
-}
-
-void loop()
+void I2CSlaveServer::loop()
 {
     /**
      * This is the only way we can detect stop condition

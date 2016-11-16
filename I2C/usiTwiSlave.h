@@ -3,11 +3,16 @@
 
 #include <inttypes.h>
 
+/**** Settings ****/
 #define TWI_REQUIRE_STOP_CHEK 0
 #define TWI_REQUIRE_BUFFERS 0
 #define TWI_RX_BUFFER_SIZE 16
 #define TWI_TX_BUFFER_SIZE 16
 
+
+/***** api *****/
+#define OK 0
+#define ERR -1
 
 typedef int8_t(*ReceiveHandler)(uint8_t, uint8_t);
 typedef int16_t(*RequestHandler)(uint8_t);

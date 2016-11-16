@@ -1,7 +1,6 @@
 #include "usi.h"
 #include "usiTwiSlave.h"
 
-#define ERR_NO_POINTER -1;
 
 UsiTwiSlave::UsiTwiSlave()
 {
@@ -113,17 +112,6 @@ void UsiTwiSlave::SET_USI_TO_READ_DATA()
 
 void UsiTwiSlave::startConditionHandler()
 {
-    /*
-    // This triggers on second write, but claims to the callback there is only
-    *one* byte in buffer
-    ONSTOP_USI_RECEIVE_CALLBACK();
-    */
-    /*
-    // This triggers on second write, but claims to the callback there is only
-    *one* byte in buffer
-    USI_RECEIVE_CALLBACK();
-    */
-
     // set default starting conditions for new TWI package
     overflowState = CHECK_ADDRESS;
     USI::disableSDAOpenDrain();
@@ -252,14 +240,14 @@ int8_t UsiTwiSlave::receiveCall(uint8_t num, uint8_t data)
 {
     if(onReceiver)
         return onReceiver(num, data);
-    return ERR_NO_POINTER
+    return ERR;
 }
 
 int16_t UsiTwiSlave::requestCall(uint8_t num)
 {
     if(onRequest)
         return onRequest(num);
-    return ERR_NO_POINTER;
+    return ERR;
 }
 #endif
 
