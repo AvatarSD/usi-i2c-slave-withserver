@@ -1,6 +1,7 @@
 #include "usi.h"
 #include "usiTwiSlave.h"
 
+#define ERROR -1
 
 UsiTwiSlave::UsiTwiSlave()
 {
@@ -122,7 +123,7 @@ void UsiTwiSlave::startConditionHandler()
     */
 
     // set default starting conditions for new TWI package
-    overflowState = USI_SLAVE_CHECK_ADDRESS;
+    overflowState = CHECK_ADDRESS;
 
     USI::disableSDAOpenDrain();
 
@@ -149,30 +150,25 @@ void UsiTwiSlave::startConditionHandler()
 void UsiTwiSlave::overflowHandler()
 {
     uint8_t dataRegBuff = USI::data;
-
     switch(overflowState) {
-    // Address mode: check address and send ACK (and next USI_SLAVE_SEND_DATA)
-    // if OK,
-    // else reset USI
-    case USI_SLAVE_CHECK_ADDRESS:
+
+    // Address mode: check address and send ACK, else reset USI
+    case CHECK_ADDRESS:
         if((dataRegBuff == 0) || ((dataRegBuff >> 1) == slaveAddress)) {
             if(dataRegBuff & 0x01) {
-                USI_REQUEST_CALLBACK();
-                overflowState = USI_SLAVE_SEND_DATA;
+                requestCall();
+                overflowState = SEND_DATA;  // master want reading - transmitting
             } else
-                overflowState = USI_SLAVE_REQUEST_DATA; // end if
-
+                overflowState = RECEIVE_DATA; // master want writing - receiving
             SET_USI_TO_SEND_ACK();
         } else
             SET_USI_TO_TWI_START_CONDITION_MODE();
-
         break;
 
     // Master write data mode: check reply and goto USI_SLAVE_SEND_DATA if OK,
     // else reset USI
-    case USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA:
-        if(dataRegBuff) {
-            // if NACK, the master does not want more data
+    case CHECK_REPLY_FROM_ACK:
+        if(dataRegBuff) { // if NACK, the master does not want more data
             SET_USI_TO_TWI_START_CONDITION_MODE();
             return;
         }
@@ -180,44 +176,33 @@ void UsiTwiSlave::overflowHandler()
     // from here we just drop straight into USI_SLAVE_SEND_DATA if the
     // master sent an ACK
     // copy data from buffer to USIDR and set USI to shift byte
-    // next USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA
-    case USI_SLAVE_SEND_DATA:
-
-        // Get data from Buffer
+    case SEND_DATA:
         if(txWaitCount())
             USI::data = getFromTXBuff();
         else {
-            // the buffer is empty
-            //            SET_USI_TO_READ_ACK(); // This might be neccessary sometimes see
-            //            // http://www.avrfreaks.net/index.php?name=PNphpBB2&file=viewtopic&p=805227#805227
             SET_USI_TO_TWI_START_CONDITION_MODE();
             return;
-        } // end if
-
-        overflowState = USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
+        }
+        overflowState = CHECK_ACK_FROM_SEND_DATA;
         SET_USI_TO_SEND_DATA();
         break;
 
     // set USI to sample reply from master
-    // next USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA
-    case USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA:
-        overflowState = USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA;
+    case CHECK_ACK_FROM_SEND_DATA:
+        overflowState = CHECK_REPLY_FROM_ACK;
         SET_USI_TO_READ_ACK();
         break;
 
-    // Master read data mode: set USI to sample data from master, next
-    // USI_SLAVE_GET_DATA_AND_SEND_ACK
-    case USI_SLAVE_REQUEST_DATA:
-        overflowState = USI_SLAVE_GET_DATA_AND_SEND_ACK;
+    // Master read data mode: set USI to sample data from master
+    case RECEIVE_DATA:
+        overflowState = GET_DATA_AND_SEND_ACK;
         SET_USI_TO_READ_DATA();
         break;
 
     // copy data from USIDR and send ACK
-    // next USI_SLAVE_REQUEST_DATA
-    case USI_SLAVE_GET_DATA_AND_SEND_ACK:
-        // put data into buffer
+    case GET_DATA_AND_SEND_ACK:
+        overflowState = RECEIVE_DATA;
         putIntoRXBuff(dataRegBuff);
-        overflowState = USI_SLAVE_REQUEST_DATA;
         SET_USI_TO_SEND_ACK();
         break;
     } // end switch
@@ -225,38 +210,60 @@ void UsiTwiSlave::overflowHandler()
 
 
 
-void UsiTwiSlave::USI_RECEIVE_CALLBACK()
+int16_t UsiTwiSlave::requestCall()
 {
-    if(onReceiver) {
-        if(available())
-            onReceiver(available());
-    }
-}
-
-void UsiTwiSlave::ONSTOP_USI_RECEIVE_CALLBACK()
-{
-    if(USI::getStopCondIntFlag())//USISR & (1 << USIPF))
-        USI_RECEIVE_CALLBACK();
-}
-
-void UsiTwiSlave::USI_REQUEST_CALLBACK()
-{
-    USI_RECEIVE_CALLBACK();
+    receiveCall();
 
     if(onRequest)
-        onRequest();
+        return onRequest();
+    return ERROR;
+}
+
+void UsiTwiSlave::receiveCall()
+{
+    if(onReceiver)
+        if(available())
+            onReceiver(available());
+}
+
+void UsiTwiSlave::checkStopAndReceiveCall()
+{
+    if(USI::getStopCondIntFlag())
+        receiveCall();
+}
+
+void UsiTwiSlave::onReceiveSetHandler(void (*func)(uint8_t))
+{
+    onReceiver = func;
+}
+
+void UsiTwiSlave::onRequestSetHandler(int16_t (*func)())
+{
+    onRequest = func;
 }
 
 
-void UsiTwiSlave::putIntoRXBuff(uint8_t data)
+void UsiTwiSlave::put(uint8_t data)
 {
-    // check buffer size
-    if(rxCount == TWI_RX_BUFFER_SIZE) return;
+    // wait for free space in buffer
+    while(txCount == TWI_TX_BUFFER_SIZE);
 
-    rxBuf[rxHead] = data;
-    if(++rxHead == TWI_RX_BUFFER_SIZE)
-        rxHead = 0;
-    rxCount++;
+    txBuf[txHead] = data;
+    if(++txHead == TWI_TX_BUFFER_SIZE)
+        txHead = 0;
+    txCount++;
+}
+
+uint8_t UsiTwiSlave::getFromTXBuff()
+{
+    if(txCount == 0) return 0;
+
+    uint8_t data = txBuf[txTail];
+    if(++txTail == TWI_TX_BUFFER_SIZE)
+        txTail = 0;
+    txCount--;
+
+    return data;
 }
 
 uint8_t UsiTwiSlave::get(void)
@@ -272,27 +279,15 @@ uint8_t UsiTwiSlave::get(void)
     return rtn_byte;
 }
 
-uint8_t UsiTwiSlave::getFromTXBuff()
+void UsiTwiSlave::putIntoRXBuff(uint8_t data)
 {
-    if(txCount == 0) return 0;
+    // check buffer size
+    if(rxCount == TWI_RX_BUFFER_SIZE) return;
 
-    uint8_t data = txBuf[txTail];
-    if(++rxTail == TWI_TX_BUFFER_SIZE)
-        rxTail = 0;
-    txCount--;
-
-    return data;
-}
-
-void UsiTwiSlave::put(uint8_t data)
-{
-    // wait for free space in buffer
-    while(txCount == TWI_TX_BUFFER_SIZE);
-
-    txBuf[txHead] = data;
-    if(++rxHead == TWI_TX_BUFFER_SIZE)
+    rxBuf[rxHead] = data;
+    if(++rxHead == TWI_RX_BUFFER_SIZE)
         rxHead = 0;
-    txCount++;
+    rxCount++;
 }
 
 uint8_t UsiTwiSlave::available(void)
