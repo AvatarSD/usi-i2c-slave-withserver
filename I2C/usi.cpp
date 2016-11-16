@@ -1,7 +1,9 @@
 #include "usi.h"
-#include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include "pindefs.h"
+
+
 
 //data regs:
 volatile uint8_t & USI::data = USIDR;
@@ -75,9 +77,7 @@ uint8_t USI::counterValue()
 
 void USI::setCounterValue(uint8_t val)
 {
-    cli();
     USISR = (USISR & ~0b00001111) | (val & 0b1111);
-    sei();
 }
 
 //control regs:
@@ -101,28 +101,24 @@ void USI::disableOvfInt()
     USICR &= ~_BV(USIOIE);
 }
 
-void USI::setWireMode(USI::WireMode mode)
+void USI::setWireMode(WireMode mode)
 {
-    cli();
-    USICR = (USICR & ~0b110000) | ((((uint8_t)mode) << 4) & 0b110000);
-    sei();
+    USICR = ((USICR & ~0b110000) | (((uint8_t)mode) << 4)) ;
 }
 
-USI::WireMode USI::getWireMode()
+WireMode USI::getWireMode()
 {
-    return (USI::WireMode)((USICR >> 4) & 0b11);
+    return (WireMode)((USICR >> 4) & 0b11);
 }
 
-void USI::setClockMode(USI::ClockMode mode)
+void USI::setClockMode(ClockMode mode)
 {
-    cli();
     USICR = (USICR & ~0b1110) | ((((uint8_t)mode) << 1) & 0b1110);
-    sei();
 }
 
-USI::ClockMode USI::getClockMode()
+ClockMode USI::getClockMode()
 {
-    return (USI::ClockMode)((USICR >> 1) & 0b111);
+    return (ClockMode)((USICR >> 1) & 0b111);
 }
 
 void USI::shiftClockStrobeCounter()
@@ -136,26 +132,66 @@ void USI::toggleClockPortPin()
 }
 
 //line regs:
-void USI::holdDataLine()
+void USI::enableSDAOpenDrain()
 {
     DDR_USI |= _BV(PORT_USI_SDA);
-    //PORT_USI &=~ _BV(PORT_USI_SDA);
 }
 
-void USI::releaseDataLine()
+void USI::disableSDAOpenDrain()
 {
     DDR_USI &= ~ _BV(PORT_USI_SDA);
-    //PORT_USI &=~ _BV(PORT_USI_SDA);
 }
 
-void USI::holdClockLine()
+bool USI::getSDAState()
+{
+    return PIN_USI & (1 << PIN_USI_SDA);
+}
+
+void USI::enableForceHoldSDA()
+{
+    PORT_USI &= ~ _BV(PORT_USI_SDA);
+}
+
+void USI::disableForceHoldSDA()
+{
+    PORT_USI |= _BV(PORT_USI_SDA);
+}
+
+void USI::enableSCLOpenDrain()
 {
     DDR_USI |= _BV(PORT_USI_SCL);
-    //PORT_USI &= ~ _BV(PORT_USI_SCL);
 }
 
-void USI::releaseClockLine()
+void USI::disableSCLOpenDrain()
 {
-    DDR_USI &= ~ _BV(PORT_USI_SDA);
-    //PORT_USI &= ~ _BV(PORT_USI_SDA);
+    DDR_USI &= ~ _BV(PORT_USI_SCL);
+}
+
+bool USI::getSCLState()
+{
+    return PIN_USI & (1 << PIN_USI_SCL);
+}
+
+void USI::enableForceHoldSCL()
+{
+    PORT_USI &= ~ _BV(PORT_USI_SCL);
+}
+
+void USI::disableForceHoldSCL()
+{
+    PORT_USI |= _BV(PORT_USI_SCL);
+}
+
+// isr`s
+void (*USI::startConditionHandler)();
+void(*USI::overflowHandler)();
+
+ISR(USI_START_VECTOR)
+{
+    USI::startConditionHandler();
+}
+
+ISR(USI_OVERFLOW_VECTOR)
+{
+    USI::overflowHandler();
 }

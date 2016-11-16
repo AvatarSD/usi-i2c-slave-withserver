@@ -3,9 +3,31 @@
 
 #include <inttypes.h>
 
+enum WireMode {
+    NORMAL = 0b00,
+    SPI = 0b01,
+    TWI = 0b10,
+    TWI_WAIT = 0b11
+};
+
+enum ClockMode {
+    NONE = 0b000,
+    SOFTWARE = 0b001,
+    TIMER0_CMP = 0b010,
+    EXT_POS = 0b100, // for i2c slave
+    EXT_NEG = 0b110,
+    EXT_POS_SOFT_CONT = 0b101,
+    EXT_NEG_SOFT_CONT = 0b111
+};
+
+
 class USI
 {
 public:
+    //isr's
+    static void (*startConditionHandler)();
+    static void(*overflowHandler)();
+
     //data
     static volatile uint8_t & data;
 
@@ -43,37 +65,26 @@ public:
     static void enableOvfInt();
     static void disableOvfInt();
 
-    enum WireMode
-    {
-        NORMAL = 0b00,
-        SPI = 0b01,
-        TWI = 0b10,
-        TWI_WAIT = 0b11
-    };
-    static void setWireMode(USI::WireMode mode);
-    static USI::WireMode getWireMode();
+    static void setWireMode(WireMode);
+    static WireMode getWireMode();
 
-    enum ClockMode
-    {
-        NONE = 0b000,
-        SOFTWARE = 0b001,
-        TIMER0_CMP = 0b010,
-        EXT_POS = 0b100, // for i2c slave
-        EXT_NEG = 0b110,
-        EXT_POS_SOFT_CONT = 0b101,
-        EXT_NEG_SOFT_CONT = 0b111
-    };
-    static void setClockMode(USI::ClockMode mode);
-    static USI::ClockMode getClockMode();
+    static void setClockMode(ClockMode);
+    static ClockMode getClockMode();
 
     static void shiftClockStrobeCounter();
     static void toggleClockPortPin();
 
     //direct accses to pin's
-    static void holdDataLine();
-    static void releaseDataLine();
-    static void holdClockLine();
-    static void releaseClockLine();
+    static void enableSDAOpenDrain();
+    static void disableSDAOpenDrain();
+    static bool getSDAState();
+    static void enableForceHoldSDA();
+    static void disableForceHoldSDA();
+    static void enableSCLOpenDrain();
+    static void disableSCLOpenDrain();
+    static bool getSCLState();
+    static void enableForceHoldSCL();
+    static void disableForceHoldSCL();
 
 private:
     USI() {}
