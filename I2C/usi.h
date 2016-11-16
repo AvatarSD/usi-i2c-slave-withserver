@@ -7,12 +7,18 @@ class USI
 {
 public:
     //data
-    static volatile uint8_t &data;
+    static volatile uint8_t & data;
 
     //buffer
-    static volatile uint8_t &buffer;
+    static volatile uint8_t & buffer;
 
     //status
+    static void setStatus(bool start,
+                          bool ovf,
+                          bool stop,
+                          bool collision,
+                          uint8_t counter);
+
     static bool getStartCondIntFlag();
     static void clearStartCondIntFlag();
     static void releaseStartCondLock();
@@ -72,7 +78,7 @@ public:
 private:
     USI() {}
     USI(const USI &) {}
-    USI &operator=(const USI &) = delete;
+    USI & operator=(const USI &) = delete;
 };
 
 #endif

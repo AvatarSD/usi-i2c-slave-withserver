@@ -34,6 +34,11 @@ static volatile uint8_t txHead;
 static volatile uint8_t txTail;
 static volatile uint8_t txCount;
 
+// on_XXX handler pointers
+void (*usi_onRequestPtr)(void);
+void (*usi_onReceiverPtr)(uint8_t);
+void (*_onTwiDataRequest)(void);
+
 // flushes the TWI buffers
 static void
 flushTwiBuffers(void)
@@ -46,21 +51,34 @@ flushTwiBuffers(void)
     txCount = 0;
 }
 
-// on_XXX handler pointers
-void (*usi_onRequestPtr)(void);
-void (*usi_onReceiverPtr)(uint8_t);
-void (*_onTwiDataRequest)(void);
 
-void clearIntFlagExeptStart()
+void SET_USI_TO_TWI_START_CONDITION_MODE()
 {
-    USI::releaseStartCondLock();
-    USI::clearOvfIntFlag();
-    USI::clearStopCondIntFlag();
-    USI::clearCollisionFlag();
+    /* enable Start Condition Interrupt, disable Overflow Interrupt */
+    USI::enableStartInt();
+    USI::disableOvfInt();
+    /* set USI in Two-wire mode, no USI Counter overflow hold */
+    USI::setWireMode(USI::WireMode::TWI);
+    /* Shift Register Clock Source = External, positive edge */
+    /* 4-Bit Counter: Source = external,both edges */
+    USI::setClockMode(USI::EXT_POS);
+
+
+    //    USISR = /* clear all interrupt flags, except Start Cond */
+    //        (0 << USI_START_COND_INT) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) |
+    //        (0x0 << USICNT0);
+
+    /* set USI to shift out 8 bits */
+    //USI::setCounterValue(0x00);
+    /* clear all interrupt flags, except Start Cond */
+    //clearIntFlagExeptStart();
+
+    /* set USI counter to shift 1 bit */
+    /* clear all interrupt flags, except Start Cond */
+    USI::setStatus(0, 1, 1, 1, 0x00);
 }
 
-void
-SET_USI_TO_SEND_ACK()
+void SET_USI_TO_SEND_ACK()
 {
     /* prepare ACK */
     USI::data = 0;
@@ -80,13 +98,16 @@ SET_USI_TO_SEND_ACK()
     //            | (0x0E << USICNT0);
 
     /* set USI counter to shift 1 bit */
-    USI::setCounterValue(0x0E);
+    //USI::setCounterValue(0x0E);
     /* clear all interrupt flags, except Start Cond */
-    clearIntFlagExeptStart();
+    //clearIntFlagExeptStart();
+
+    /* set USI counter to shift 1 bit */
+    /* clear all interrupt flags, except Start Cond */
+    USI::setStatus(0, 1, 1, 1, 0x0E);
 }
 
-void
-SET_USI_TO_READ_ACK()
+void SET_USI_TO_READ_ACK()
 {
     /* set SDA as input */
     USI::releaseDataLine();
@@ -103,33 +124,15 @@ SET_USI_TO_READ_ACK()
     //            (0x0E << USICNT0);
 
     /* set USI counter to shift 1 bit */
-    USI::setCounterValue(0x0E);
+    //USI::setCounterValue(0x0E);
     /* clear all interrupt flags, except Start Cond */
-    clearIntFlagExeptStart();
+    //clearIntFlagExeptStart();
+
+    /* set USI counter to shift 1 bit */
+    /* clear all interrupt flags, except Start Cond */
+    USI::setStatus(0, 1, 1, 1, 0x0E);
 }
 
-void
-SET_USI_TO_TWI_START_CONDITION_MODE()
-{
-    /* enable Start Condition Interrupt, disable Overflow Interrupt */
-    USI::enableStartInt();
-    USI::disableOvfInt();
-    /* set USI in Two-wire mode, no USI Counter overflow hold */
-    USI::setWireMode(USI::WireMode::TWI);
-    /* Shift Register Clock Source = External, positive edge */
-    /* 4-Bit Counter: Source = external,both edges */
-    USI::setClockMode(USI::EXT_POS);
-
-
-    //    USISR = /* clear all interrupt flags, except Start Cond */
-    //        (0 << USI_START_COND_INT) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC) |
-    //        (0x0 << USICNT0);
-
-    /* set USI to shift out 8 bits */
-    USI::setCounterValue(0x00);
-    /* clear all interrupt flags, except Start Cond */
-    clearIntFlagExeptStart();
-}
 
 void
 SET_USI_TO_SEND_DATA()
@@ -144,9 +147,13 @@ SET_USI_TO_SEND_DATA()
     //            (0x0 << USICNT0);
 
     /* set USI to shift out 8 bits */
-    USI::setCounterValue(0x00);
+    //USI::setCounterValue(0x00);
     /* clear all interrupt flags, except Start Cond */
-    clearIntFlagExeptStart();
+    //clearIntFlagExeptStart();
+
+    /* set USI counter to shift 1 bit */
+    /* clear all interrupt flags, except Start Cond */
+    USI::setStatus(0, 1, 1, 1, 0x00);
 }
 
 void
@@ -163,9 +170,13 @@ SET_USI_TO_READ_DATA()
 
 
     /* set USI to shift out 8 bits */
-    USI::setCounterValue(0x00);
+    //USI::setCounterValue(0x00);
     /* clear all interrupt flags, except Start Cond */
-    clearIntFlagExeptStart();
+    //clearIntFlagExeptStart();
+
+    /* set USI counter to shift 1 bit */
+    /* clear all interrupt flags, except Start Cond */
+    USI::setStatus(0, 1, 1, 1, 0x00);
 
     //    cli();
     //    USISR &= ~ _BV(0);
