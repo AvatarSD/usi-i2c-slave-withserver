@@ -41,6 +41,7 @@ especially if you buy more than 5 at a time
 #include "server.h"
 #include <usiTwiSlave.h>
 
+#define ADDRESS_ERR -1
 
 uint8_t I2C_SLAVE_ADDRESS = 0x4;
 
@@ -58,20 +59,30 @@ const uint16_t reg_size = sizeof(i2c_regs);
 
 UsiTwiSlave * device;
 
+#if TWI_REQUIRE_BUFFERS
 /**
  * This is called for each read request we receive, never put more than one byte
  * of data (with TinyWireS.send) to the
  * send-buffer when using this callback
  */
-int16_t requestEvent()
+void requestEvent()
 {
     device->put(i2c_regs[reg_position++]);
     if(reg_position >= reg_size)
         reg_position = 0;
-
-    return 0;
 }
+#else
+int16_t requestEvent(uint8_t num)
+{
+    if(reg_position >= reg_size) {
+        reg_position = 0;
+        return ADDRESS_ERR;
+    }
+    return i2c_regs[reg_position++];
+}
+#endif
 
+#if TWI_REQUIRE_BUFFERS
 /**
  * The I2C data received -handler
  *
@@ -90,6 +101,31 @@ void receiveEvent(uint8_t howMany)
             reg_position = 0;
     }
 }
+#else
+int8_t receiveEvent(uint8_t num, uint8_t data)
+{
+    if(num == 0) {
+        if(data < reg_size)
+            reg_position = data;
+        else
+            return -1;
+        return 0;
+    }
+    //    uint16_t pos = (uint16_t)reg_position + num-1;
+    //    if(pos >= reg_size) {
+    //        reg_position = 0;
+    //        return -1;
+    //    }
+
+    if(reg_position >= reg_size) {
+        reg_position = 0;
+        return ADDRESS_ERR;
+    }
+    i2c_regs[reg_position++] = data;
+    return 0;
+}
+#endif
+
 
 void setup()
 {
@@ -109,5 +145,7 @@ void loop()
      * It will call the function registered via TinyWireS.onReceive(); if there is
      * data in the buffer on stop.
      */
+#if TWI_REQUIRE_STOP_CHEK
     device->checkStopAndReceiveCall();
+#endif
 }
