@@ -2,41 +2,55 @@
 #include "usiTwiSlave.h"
 
 
-/********************************************************************************
+UsiTwiSlave::UsiTwiSlave()
+{
+    rxTail = 0;
+    rxHead = 0;
+    rxCount = 0;
+    txTail = 0;
+    txHead = 0;
+    txCount = 0;
 
-                                local functions
+    slaveAddress = 0;
 
-********************************************************************************/
+    USI::overflowHandler = &overflowVec;
+    USI::startConditionHandler = &startConditionVec;
+}
 
-enum overflowState_t {
-    USI_SLAVE_CHECK_ADDRESS = 0x00,
-    USI_SLAVE_SEND_DATA = 0x01,
-    USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA = 0x02,
-    USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA = 0x03,
-    USI_SLAVE_REQUEST_DATA = 0x04,
-    USI_SLAVE_GET_DATA_AND_SEND_ACK = 0x05
-};
+UsiTwiSlave * UsiTwiSlave::getInstance()
+{
+    static UsiTwiSlave instance;
+    return &instance;
+}
 
-uint8_t slaveAddress;
-volatile overflowState_t overflowState;
+void UsiTwiSlave::init(uint8_t address)
+{
+    slaveAddress = address;
 
-uint8_t rxBuf[TWI_RX_BUFFER_SIZE];
-volatile uint8_t rxHead;
-volatile uint8_t rxTail;
-volatile uint8_t rxCount;
+    /* set USI in Two-wire mode, no USI Counter overflow hold */
+    USI::setWireMode(WireMode::TWI);
+    // set SCL high
+    USI::disableForceHoldSCL();
+    // set SDA high
+    USI::disableForceHoldSDA();
+    // Set SDA as input
+    USI::enableSCLOpenDrain();
+    // Set SDA as output
+    USI::disableSDAOpenDrain();
 
-uint8_t txBuf[TWI_TX_BUFFER_SIZE];
-volatile uint8_t txHead;
-volatile uint8_t txTail;
-volatile uint8_t txCount;
+    /* Shift Register Clock Source = External, positive edge */
+    /* 4-Bit Counter: Source = external,both edges */
+    USI::setClockMode(ClockMode::EXT_POS);
+    /* clear counter, all interrupt flags, except Start Cond */
+    USI::setStatus(1, 1, 1, 1, 0x00);
+    /* disable Overflow Interrupt */
+    USI::disableOvfInt();
+    /* enable Start Condition Interrupt */
+    USI::enableStartInt();
+}
 
-// on_XXX handler pointers
-void (*usi_onRequestPtr)(void);
-void (*usi_onReceiverPtr)(uint8_t);
-void (*_onTwiDataRequest)(void);
 
-
-void SET_USI_TO_TWI_START_CONDITION_MODE()
+void UsiTwiSlave::SET_USI_TO_TWI_START_CONDITION_MODE()
 {
     /* set SDA as input */
     USI::disableSDAOpenDrain();
@@ -53,7 +67,7 @@ void SET_USI_TO_TWI_START_CONDITION_MODE()
     USI::setStatus(0, 1, 1, 1, 0x00);
 }
 
-void SET_USI_TO_SEND_ACK()
+void UsiTwiSlave::SET_USI_TO_SEND_ACK()
 {
     /* prepare ACK */
     USI::data = 0;
@@ -64,7 +78,7 @@ void SET_USI_TO_SEND_ACK()
     USI::setStatus(0, 1, 1, 1, 0x0E);
 }
 
-void SET_USI_TO_READ_ACK()
+void UsiTwiSlave::SET_USI_TO_READ_ACK()
 {
     /* set SDA as input */
     USI::disableSDAOpenDrain();
@@ -75,7 +89,7 @@ void SET_USI_TO_READ_ACK()
     USI::setStatus(0, 1, 1, 1, 0x0E);
 }
 
-void SET_USI_TO_SEND_DATA()
+void UsiTwiSlave::SET_USI_TO_SEND_DATA()
 {
     /* set SDA as output */
     USI::enableSDAOpenDrain();
@@ -84,7 +98,7 @@ void SET_USI_TO_SEND_DATA()
     USI::setStatus(0, 1, 1, 1, 0x00);
 }
 
-void SET_USI_TO_READ_DATA()
+void UsiTwiSlave::SET_USI_TO_READ_DATA()
 {
     /* set SDA as input */
     USI::disableSDAOpenDrain();
@@ -93,52 +107,8 @@ void SET_USI_TO_READ_DATA()
     USI::setStatus(0, 1, 1, 1, 0x00);
 }
 
-void USI_RECEIVE_CALLBACK()
-{
-    if(usi_onReceiverPtr) {
-        if(usiTwiAmountDataInReceiveBuffer())
-            usi_onReceiverPtr(usiTwiAmountDataInReceiveBuffer());
-    }
-}
 
-void ONSTOP_USI_RECEIVE_CALLBACK()
-{
-    if(USI::getStopCondIntFlag())//USISR & (1 << USIPF))
-        USI_RECEIVE_CALLBACK();
-}
-
-void USI_REQUEST_CALLBACK()
-{
-    USI_RECEIVE_CALLBACK();
-
-    if(usi_onRequestPtr)
-        usi_onRequestPtr();
-}
-
-
-void putIntoRXBuff(uint8_t data)
-{
-    // check buffer size
-    if(rxCount < TWI_RX_BUFFER_SIZE) {
-        rxBuf[rxHead] = data;
-        rxHead = (rxHead + 1) & TWI_RX_BUFFER_MASK;
-        rxCount++;
-    } else {
-        // overrun
-        // drop data
-    }
-}
-
-uint8_t getFromTXBuff()
-{
-    uint8_t data = txBuf[txTail];
-    txTail = (txTail + 1) & TWI_TX_BUFFER_MASK;
-    txCount--;
-    return data;
-}
-
-
-void startConditionHandler()
+void UsiTwiSlave::startConditionHandler()
 {
     /*
     // This triggers on second write, but claims to the callback there is only
@@ -156,7 +126,6 @@ void startConditionHandler()
 
     USI::disableSDAOpenDrain();
 
-
     // wait for SCL to go low to ensure the Start Condition has completed (the
     // start detector will hold SCL low ) - if a Stop Condition arises then leave
     // the interrupt to prevent waiting forever - don't use USISR to test for Stop
@@ -166,36 +135,10 @@ void startConditionHandler()
 
     if(!USI::getSDAState()) {
         // a Stop Condition did not occur
-        /*USICR =
-            // keep Start Condition Interrupt enabled to detect RESTART
-            (1 << USISIE) |
-            // enable Overflow Interrupt
-            (1 << USIOIE) |
-            // set USI in Two-wire mode, hold SCL low on USI Counter overflow
-            (1 << USIWM1) | (1 << USIWM0) |
-            // Shift Register Clock Source = External, positive edge
-            // 4-Bit Counter Source = external, both edges
-            (1 << USICS1) | (0 << USICS0) | (0 << USICLK) |
-            // no toggle clock-port pin
-            (0 << USITC); */
-
         USI::enableOvfInt();
         USI::setWireMode(WireMode::TWI_WAIT);
     } else {
         // a Stop Condition did occur
-        /*USICR =
-            // enable Start Condition Interrupt
-            (1 << USISIE) |
-            // disable Overflow Interrupt
-            (0 << USIOIE) |
-            // set USI in Two-wire mode, no USI Counter overflow hold
-            (1 << USIWM1) | (0 << USIWM0) |
-            // Shift Register Clock Source = external, positive edge
-            // 4-Bit Counter Source = external, both edges
-            (1 << USICS1) | (0 << USICS0) | (0 << USICLK) |
-            // no toggle clock-port pin
-            (0 << USITC);*/
-
         USI::disableOvfInt();
         USI::setWireMode(WireMode::TWI);
     }
@@ -203,7 +146,7 @@ void startConditionHandler()
     USI::setStatus(1, 1, 1, 1, 0x00);
 }
 
-void overflowHandler()
+void UsiTwiSlave::overflowHandler()
 {
     uint8_t dataRegBuff = USI::data;
 
@@ -241,7 +184,7 @@ void overflowHandler()
     case USI_SLAVE_SEND_DATA:
 
         // Get data from Buffer
-        if(usiTwiDataInTransmitBuffer())
+        if(txWaitCount())
             USI::data = getFromTXBuff();
         else {
             // the buffer is empty
@@ -281,79 +224,94 @@ void overflowHandler()
 }
 
 
-/********************************************************************************
 
-                                public functions
-
-********************************************************************************/
-
-// initialise USI for TWI slave mode
-void usiTwiSlaveInit(uint8_t ownAddress)
+void UsiTwiSlave::USI_RECEIVE_CALLBACK()
 {
-    slaveAddress = ownAddress;
-    rxTail = 0;
-    rxHead = 0;
-    rxCount = 0;
-    txTail = 0;
-    txHead = 0;
-    txCount = 0;
-
-    USI::overflowHandler = &overflowHandler;
-    USI::startConditionHandler = &startConditionHandler;
-
-    /* set USI in Two-wire mode, no USI Counter overflow hold */
-    USI::setWireMode(WireMode::TWI);
-    // set SCL high
-    USI::disableForceHoldSCL();
-    // set SDA high
-    USI::disableForceHoldSDA();
-    // Set SDA as input
-    USI::enableSCLOpenDrain();
-    // Set SDA as output
-    USI::disableSDAOpenDrain();
-    /* disable Overflow Interrupt */
-    USI::disableOvfInt();
-    /* Shift Register Clock Source = External, positive edge */
-    /* 4-Bit Counter: Source = external,both edges */
-    USI::setClockMode(ClockMode::EXT_POS);
-    /* clear counter, all interrupt flags, except Start Cond */
-    USI::setStatus(1, 1, 1, 1, 0x00);
-    /* enable Start Condition Interrupt */
-    USI::enableStartInt();
+    if(onReceiver) {
+        if(available())
+            onReceiver(available());
+    }
 }
 
-// put data in the transmission buffer, wait if buffer is full
-void usiTwiTransmitByte(uint8_t data)
+void UsiTwiSlave::ONSTOP_USI_RECEIVE_CALLBACK()
 {
-    // wait for free space in buffer
-    while(txCount == TWI_TX_BUFFER_SIZE);
-
-    // store data in buffer
-    txBuf[txHead] = data;
-    txHead = (txHead + 1) & TWI_TX_BUFFER_MASK;
-    txCount++;
+    if(USI::getStopCondIntFlag())//USISR & (1 << USIPF))
+        USI_RECEIVE_CALLBACK();
 }
 
-// return a byte from the receive buffer, wait if buffer is empty
-uint8_t usiTwiReceiveByte(void)
+void UsiTwiSlave::USI_REQUEST_CALLBACK()
+{
+    USI_RECEIVE_CALLBACK();
+
+    if(onRequest)
+        onRequest();
+}
+
+
+void UsiTwiSlave::putIntoRXBuff(uint8_t data)
+{
+    // check buffer size
+    if(rxCount == TWI_RX_BUFFER_SIZE) return;
+
+    rxBuf[rxHead] = data;
+    if(++rxHead == TWI_RX_BUFFER_SIZE)
+        rxHead = 0;
+    rxCount++;
+}
+
+uint8_t UsiTwiSlave::get(void)
 {
     // wait for Rx data
     while(!rxCount);
 
     uint8_t rtn_byte = rxBuf[rxTail];
-    // calculate buffer index
-    rxTail = (rxTail + 1) & TWI_RX_BUFFER_MASK;
+    if(++rxTail == TWI_RX_BUFFER_SIZE)
+        rxTail = 0;
     rxCount--;
-    // return data from the buffer.
+
     return rtn_byte;
 }
 
-uint8_t usiTwiAmountDataInReceiveBuffer(void)
+uint8_t UsiTwiSlave::getFromTXBuff()
+{
+    if(txCount == 0) return 0;
+
+    uint8_t data = txBuf[txTail];
+    if(++rxTail == TWI_TX_BUFFER_SIZE)
+        rxTail = 0;
+    txCount--;
+
+    return data;
+}
+
+void UsiTwiSlave::put(uint8_t data)
+{
+    // wait for free space in buffer
+    while(txCount == TWI_TX_BUFFER_SIZE);
+
+    txBuf[txHead] = data;
+    if(++rxHead == TWI_TX_BUFFER_SIZE)
+        rxHead = 0;
+    txCount++;
+}
+
+uint8_t UsiTwiSlave::available(void)
 {
     return rxCount;
 }
 
-bool usiTwiDataInTransmitBuffer(void)
+uint8_t UsiTwiSlave::txWaitCount(void)
 {
     return txCount;
+}
+
+
+void UsiTwiSlave::startConditionVec()
+{
+    getInstance()->startConditionHandler();
+}
+
+void UsiTwiSlave::overflowVec()
+{
+    getInstance()->overflowHandler();
 }

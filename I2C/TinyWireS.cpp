@@ -23,26 +23,26 @@
 
 #include <inttypes.h>
 
-USI_TWI_S::USI_TWI_S()
+USI_TWI_S::USI_TWI_S() : device(UsiTwiSlave::getInstance())
 {
+
 }
 
 void USI_TWI_S::begin(uint8_t slaveAddr)
 {
-    // initialize I2C lib
-    usiTwiSlaveInit(slaveAddr);
+    device->init(slaveAddr);
 }
 
 void USI_TWI_S::send(uint8_t data)
 {
     // send it back to master
-    usiTwiTransmitByte(data);
+    device->put(data);
 }
 
 uint8_t USI_TWI_S::available()
 {
     // the bytes available that haven't been read yet
-    return usiTwiAmountDataInReceiveBuffer();
+    return device->available();
     // return usiTwiDataInReceiveBuffer(); // This is wrong as far as the Wire API
     // is concerned since it returns boolean and not amount
 }
@@ -50,53 +50,39 @@ uint8_t USI_TWI_S::available()
 uint8_t USI_TWI_S::receive()
 {
     // returns the bytes received one at a time
-    return usiTwiReceiveByte();
+    return device->get();
 }
 
 // sets function called on slave write
 void USI_TWI_S::onReceive(void (*function)(uint8_t))
 {
-    usi_onReceiverPtr = function;
+    device->onReceiver = function;
 }
 
 // sets function called on slave read
 void USI_TWI_S::onRequest(void (*function)(void))
 {
-    usi_onRequestPtr = function;
+    device->onRequest = function;
 }
 
-void TinyWireS_stop_check()
+void USI_TWI_S::TinyWireS_stop_check()
 {
-    if (!usi_onReceiverPtr) {
+    if(!device->onReceiver) {
         // no onReceive callback, nothing to do...
         return;
     }
-    if (!(USISR & (1 << USIPF))) {
+
+    if(!(USISR & (1 << USIPF))) {
         // Stop not detected
         return;
     }
-    uint8_t amount = usiTwiAmountDataInReceiveBuffer();
-    if (amount == 0) {
+
+    uint8_t amount = device->available();
+
+    if(amount == 0) {
         // no data in buffer
         return;
     }
-    usi_onReceiverPtr(amount);
+
+    device->onReceiver(amount);
 }
-
-// Implement a delay loop that checks for the stop bit (basically direct copy of
-// the stock arduino implementation from wiring.c)
-// void tws_delay(unsigned long ms)
-//{
-//    uint16_t start = (uint16_t)micros();
-//    while (ms > 0)
-//    {
-//        TinyWireS_stop_check();
-//        if (((uint16_t)micros() - start) >= 1000)
-//        {
-//            ms--;
-//            start += 1000;
-//        }
-//    }
-//}
-
-// Preinstantiate Objects //////////////////////////////////////////////////////

@@ -4,39 +4,81 @@
 #include <inttypes.h>
 
 
-void usiTwiSlaveInit(uint8_t);
 
-void usiTwiTransmitByte(uint8_t);
-uint8_t usiTwiReceiveByte(void);
+#define TWI_RX_BUFFER_SIZE 16
+#define TWI_TX_BUFFER_SIZE 16
 
-bool usiTwiDataInReceiveBuffer(void);
-extern void (*_onTwiDataRequest)(void);
-bool usiTwiDataInTransmitBuffer(void);
-uint8_t usiTwiAmountDataInReceiveBuffer(void);
 
-// on_XXX handler pointers
-extern void (*usi_onRequestPtr)(void);
-extern void (*usi_onReceiverPtr)(uint8_t);
+class UsiTwiSlave
+{
+public:
+    void init(uint8_t address);
 
-//driver buffer definitions
-// permitted buffer sizes: 1, 2, 4, 8, 16, 32, 64, 128 or 256
+    void put(uint8_t);
+    uint8_t get(void);
 
-#ifndef TWI_RX_BUFFER_SIZE
-#define TWI_RX_BUFFER_SIZE (16)
-#endif
-#define TWI_RX_BUFFER_MASK (TWI_RX_BUFFER_SIZE - 1)
+    uint8_t txWaitCount(void);
+    uint8_t available(void);
 
-#if (TWI_RX_BUFFER_SIZE & TWI_RX_BUFFER_MASK)
-#error TWI RX buffer size is not a power of 2
-#endif
+    void (*onRequest)(void);
+    void (*onReceiver)(uint8_t);
 
-#ifndef TWI_TX_BUFFER_SIZE
-#define TWI_TX_BUFFER_SIZE (16)
-#endif
-#define TWI_TX_BUFFER_MASK (TWI_TX_BUFFER_SIZE - 1)
+private:
+    enum TwiSlaveState {
+        USI_SLAVE_CHECK_ADDRESS = 0x00,
+        USI_SLAVE_SEND_DATA = 0x01,
+        USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA = 0x02,
+        USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA = 0x03,
+        USI_SLAVE_REQUEST_DATA = 0x04,
+        USI_SLAVE_GET_DATA_AND_SEND_ACK = 0x05
+    };
 
-#if (TWI_TX_BUFFER_SIZE & TWI_TX_BUFFER_MASK)
-#error TWI TX buffer size is not a power of 2
-#endif
+    static void startConditionVec();
+    static void overflowVec();
+    void startConditionHandler();
+    void overflowHandler();
+
+    uint8_t slaveAddress;
+    volatile TwiSlaveState overflowState;
+
+    void SET_USI_TO_TWI_START_CONDITION_MODE();
+    void SET_USI_TO_SEND_ACK();
+    void SET_USI_TO_READ_ACK();
+    void SET_USI_TO_SEND_DATA();
+    void SET_USI_TO_READ_DATA();
+
+    void USI_RECEIVE_CALLBACK();
+    void ONSTOP_USI_RECEIVE_CALLBACK();
+    void USI_REQUEST_CALLBACK();
+
+
+    // void (*_onTwiDataRequest)(void);
+
+    uint8_t txBuf[TWI_TX_BUFFER_SIZE];
+    volatile uint8_t txHead;
+    volatile uint8_t txTail;
+    volatile uint8_t txCount;
+
+    uint8_t rxBuf[TWI_RX_BUFFER_SIZE];
+    volatile uint8_t rxHead;
+    volatile uint8_t rxTail;
+    volatile uint8_t rxCount;
+    //FIFObuff txBuff, rxBuff;
+
+    void putIntoRXBuff(uint8_t data);
+    uint8_t getFromTXBuff();
+
+private:
+    UsiTwiSlave();
+    UsiTwiSlave(const UsiTwiSlave &) {}
+    UsiTwiSlave & operator=(UsiTwiSlave &) = default;
+public:
+    static UsiTwiSlave * getInstance();
+    static void deleteInstance();
+};
+
+
+
+
 
 #endif

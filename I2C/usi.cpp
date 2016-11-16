@@ -188,10 +188,12 @@ void(*USI::overflowHandler)();
 
 ISR(USI_START_VECTOR)
 {
-    USI::startConditionHandler();
+    if(USI::startConditionHandler)
+        USI::startConditionHandler();
 }
 
 ISR(USI_OVERFLOW_VECTOR)
 {
-    USI::overflowHandler();
+    if(USI::overflowHandler)
+        USI::overflowHandler();
 }

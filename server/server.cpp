@@ -82,6 +82,7 @@ void requestEvent()
     TinyWireS.send(i2c_regs[reg_position]);
     // Increment the reg position on each read, and loop back to zero
     reg_position++;
+
     if(reg_position >= reg_size)
         reg_position = 0;
 }
@@ -96,27 +97,28 @@ void requestEvent()
  */
 void receiveEvent(uint8_t howMany)
 {
-    if(howMany < 1)
-    {
+    if(howMany < 1) {
         // Sanity-check
         return;
     }
-    if(howMany > TWI_RX_BUFFER_SIZE)
-    {
+
+    if(howMany > TWI_RX_BUFFER_SIZE) {
         // Also insane number
         return;
     }
+
     reg_position = TinyWireS.receive();
     howMany--;
-    if(!howMany)
-    {
+
+    if(!howMany) {
         // This write was only to set the buffer for next read
         return;
     }
-    while(howMany--)
-    {
+
+    while(howMany--) {
         i2c_regs[reg_position] = TinyWireS.receive();
         reg_position++;
+
         if(reg_position >= reg_size)
             reg_position = 0;
     }
@@ -139,5 +141,5 @@ void loop()
      * It will call the function registered via TinyWireS.onReceive(); if there is
      * data in the buffer on stop.
      */
-    TinyWireS_stop_check();
+    TinyWireS.TinyWireS_stop_check();
 }

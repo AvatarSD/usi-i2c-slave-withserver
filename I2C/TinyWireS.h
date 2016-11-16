@@ -21,7 +21,7 @@
   To Send:
     TinyWireS.send(uint8_t data){                    // sends a requested byte to master
 
-  TODO:	(by others!)
+  TODO: (by others!)
     - onReceive and onRequest handlers are not implimented.
     - merge this class with TinyWireM for master & slave support in one library
 
@@ -39,21 +39,24 @@
 #include "usiTwiSlave.h"
 #include <inttypes.h>
 
-class USI_TWI_S {
-private:
-    //static uint8_t USI_BytesAvail;
-
+class USI_TWI_S
+{
 public:
     USI_TWI_S();
+
     void begin(uint8_t I2C_SLAVE_ADDR);
     void send(uint8_t data);
     uint8_t available();
     uint8_t receive();
     void onReceive(void (*)(uint8_t));
     void onRequest(void (*)(void));
+    void TinyWireS_stop_check();
+
+private:
+    UsiTwiSlave * device;
 };
 
-void TinyWireS_stop_check();
+//void TinyWireS_stop_check();
 // Implement a delay loop that checks for the stop bit (basically direct copy of the stock arduino implementation from wiring.c)
 //void tws_delay(unsigned long);
 
