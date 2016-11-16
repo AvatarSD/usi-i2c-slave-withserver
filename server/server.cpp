@@ -55,12 +55,10 @@ void UsiTwiClientServer::requestEvent()
         reg_position = 0;
 }
 #else
-int16_t I2CSlaveServer::requestEvent(uint8_t num)
+int16_t I2CSlaveServer::requestEvent(uint8_t)
 {
-    if(reg_position >= reg_size) {
-        reg_position = 0;
+    if(reg_position >= reg_size)
         return ERR;
-    }
     return memory::read(reg_position++);
 }
 #endif
@@ -94,10 +92,8 @@ int8_t I2CSlaveServer::receiveEvent(uint8_t num, uint8_t data)
             return ERR;
         return OK;
     }
-    if(reg_position >= reg_size) {
-        reg_position = 0;
+    if(reg_position >= reg_size)
         return ERR;
-    }
     memory::write(reg_position++, data);
     return OK;
 }

@@ -28,32 +28,21 @@ UsiTwiSlave * UsiTwiSlave::getInstance()
 void UsiTwiSlave::init(uint8_t address)
 {
     slaveAddress = address;
-
-    /* set USI in Two-wire mode, no USI Counter overflow hold */
-    USI::setWireMode(WireMode::TWI);
+    SET_USI_TO_TWI_START_CONDITION_MODE();
     // set SCL high
     USI::disableForceHoldSCL();
     // set SDA high
     USI::disableForceHoldSDA();
     // Set SDA as input
     USI::enableSCLOpenDrain();
-    // Set SDA as output
-    USI::disableSDAOpenDrain();
-
-    /* Shift Register Clock Source = External, positive edge */
-    /* 4-Bit Counter: Source = external,both edges */
-    USI::setClockMode(ClockMode::EXT_POS);
-    /* clear counter, all interrupt flags, except Start Cond */
-    USI::setStatus(1, 1, 1, 1, 0x00);
-    /* disable Overflow Interrupt */
-    USI::disableOvfInt();
-    /* enable Start Condition Interrupt */
-    USI::enableStartInt();
 }
 
 
 void UsiTwiSlave::SET_USI_TO_TWI_START_CONDITION_MODE()
 {
+    /* set USI counter to shift 1 bit */
+    /* clear all interrupt flags, except Start Cond */
+    USI::setStatus(1, 1, 1, 1, 0x00);
     /* set SDA as input */
     USI::disableSDAOpenDrain();
     /* enable Start Condition Interrupt, disable Overflow Interrupt */
@@ -64,9 +53,6 @@ void UsiTwiSlave::SET_USI_TO_TWI_START_CONDITION_MODE()
     /* Shift Register Clock Source = External, positive edge */
     /* 4-Bit Counter: Source = external,both edges */
     USI::setClockMode(ClockMode::EXT_POS);
-    /* set USI counter to shift 1 bit */
-    /* clear all interrupt flags, except Start Cond */
-    USI::setStatus(0, 1, 1, 1, 0x00);
 }
 
 void UsiTwiSlave::SET_USI_TO_SEND_ACK()
@@ -172,7 +158,7 @@ void UsiTwiSlave::overflowHandler()
 #else
         tmp = requestCall(startCounter++);
         if(tmp >= 0)
-            USI::data = (tmp & 0xff);
+            USI::data = tmp;
 #endif
         else {
             SET_USI_TO_TWI_START_CONDITION_MODE();
@@ -215,7 +201,7 @@ void UsiTwiSlave::overflowHandler()
         overflowState = RECEIVE_DATA;
         SET_USI_TO_SEND_ACK();
         break;
-    } // end switch
+    }
 }
 
 
