@@ -94,8 +94,7 @@ int8_t I2CSlaveServer::receiveEvent(uint8_t num, uint8_t data)
     }
     if(reg_position >= reg_size)
         return ERR;
-    memory::write(reg_position++, data);
-    return OK;
+    return memory::write(reg_position++, data);
 }
 #endif
 
