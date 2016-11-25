@@ -134,8 +134,8 @@ void UsiTwiSlave::overflowHandler()
     switch(overflowState) {
 
     // Address mode: check address and send ACK, else reset USI
-    case CHECK_ADDRESS:
-        if((dataRegBuff == 0) || ((dataRegBuff >> 1) == slaveAddress)) {
+    case CHECK_ADDRESS: // TODO auto assigment adderess
+        if((dataRegBuff >> 1) == slaveAddress) {
             if(dataRegBuff & 0x01) {
 #if TWI_REQUIRE_BUFFERS
                 requestCall();
