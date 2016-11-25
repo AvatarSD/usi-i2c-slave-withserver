@@ -3,12 +3,14 @@
 
 #include <inttypes.h>
 
+
 class UsiTwiSlave;
+
 class I2CSlaveServer
 {
 public:
     void setup();
-    void loop(); // not used
+
 private:
     int8_t receiveEvent(uint8_t num, uint8_t data);
     int16_t requestEvent(uint8_t num);
