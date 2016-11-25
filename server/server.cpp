@@ -6,9 +6,8 @@
 #include "server.h"
 #include <usiTwiSlave.h>
 #include <memory.h>
+#include <settings.h>
 
-
-#define I2C_SLAVE_ADDRESS 0x04
 
 I2CSlaveServer::I2CSlaveServer() : reg_size(memory::mapsize())
 {
@@ -18,9 +17,7 @@ I2CSlaveServer::I2CSlaveServer() : reg_size(memory::mapsize())
 
 void I2CSlaveServer::setup()
 {
-    address = I2C_SLAVE_ADDRESS; //todo:: temp
-
-    device->init(address);
+    device->init(settingsinternal::getI2cAddress());
     device->onReceiveSetHandler(&receivetIsrVec);
     device->onRequestSetHandler(&requestIsrVec);
 
