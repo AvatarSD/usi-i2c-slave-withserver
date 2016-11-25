@@ -139,22 +139,24 @@ void UsiTwiSlave::overflowHandler()
     case CHECK_ADDRESS: { // TODO auto assigment adderess
         bool rw = dataRegBuff & 0x01;
         dataRegBuff >>= 1;
-        if((dataRegBuff == MULTICAST_ADDRESS) || (dataRegBuff == slaveAddress)) {
-            if(rw) {
-                overflowState = SEND_DATA;  // master want reading - transmitting
-                // block transmition data at multicast request, if
-                //slaveAddress != MULTICAST_ADDRESS
-                if((dataRegBuff == MULTICAST_ADDRESS) &&
-                        (slaveAddress != MULTICAST_ADDRESS)) {
-                    SET_USI_TO_TWI_START_CONDITION_MODE();
-                    break;
-                }
 
-            } else
+        if((dataRegBuff == MULTICAST_ADDRESS) || (dataRegBuff == slaveAddress)) {
+            if(!rw) {
                 overflowState = RECEIVE_DATA; // master want writing - receiving
+                SET_USI_TO_SEND_ACK();
+                break;
+            }
+            if((dataRegBuff == MULTICAST_ADDRESS) && (slaveAddress != MULTICAST_ADDRESS))  {
+                SET_USI_TO_TWI_START_CONDITION_MODE();
+                break;
+            }
+            overflowState = SEND_DATA;  // master want reading - transmitting
             SET_USI_TO_SEND_ACK();
-        } else
-            SET_USI_TO_TWI_START_CONDITION_MODE();
+            break;
+
+
+        }
+        SET_USI_TO_TWI_START_CONDITION_MODE();
         break;
     }
 
