@@ -17,6 +17,7 @@ public:
     void init(uint8_t address);
 
     uint8_t getAddress();
+    void setAddress(uint8_t addr);
 
     void onReceiveSetHandler(ReceiveHandler);
     void onRequestSetHandler(RequestHandler);

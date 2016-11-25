@@ -1,5 +1,6 @@
 #include "usi.h"
 #include "usiTwiSlave.h"
+#include <conf.h>
 
 
 UsiTwiSlave::UsiTwiSlave()
@@ -18,7 +19,8 @@ UsiTwiSlave * UsiTwiSlave::getInstance()
 
 void UsiTwiSlave::init(uint8_t address)
 {
-    slaveAddress = address;
+    setAddress(address);
+
     SET_USI_TO_TWI_START_CONDITION_MODE();
     // set SCL high
     USI::disableForceHoldSCL();
@@ -31,6 +33,11 @@ void UsiTwiSlave::init(uint8_t address)
 uint8_t UsiTwiSlave::getAddress()
 {
     return slaveAddress;
+}
+
+void UsiTwiSlave::setAddress(uint8_t addr)
+{
+    slaveAddress = addr;
 }
 
 
@@ -123,31 +130,41 @@ void UsiTwiSlave::startConditionHandler()
 void UsiTwiSlave::overflowHandler()
 {
     uint8_t dataRegBuff = USI::data;
-    int16_t tmp;
 
     switch(overflowState) {
 
     /***************************************************************************************/
 
     // Address mode: check address and send ACK, else reset USI
-    case CHECK_ADDRESS: // TODO auto assigment adderess
-        if((dataRegBuff >> 1) == slaveAddress) {
-            if(dataRegBuff & 0x01) {
+    case CHECK_ADDRESS: { // TODO auto assigment adderess
+        bool rw = dataRegBuff & 0x01;
+        dataRegBuff >>= 1;
+        if((dataRegBuff == MULTICAST_ADDRESS) || (dataRegBuff == slaveAddress)) {
+            if(rw) {
                 overflowState = SEND_DATA;  // master want reading - transmitting
+                // block transmition data at multicast request, if
+                //slaveAddress != MULTICAST_ADDRESS
+                if((dataRegBuff == MULTICAST_ADDRESS) &&
+                        (slaveAddress != MULTICAST_ADDRESS)) {
+                    SET_USI_TO_TWI_START_CONDITION_MODE();
+                    break;
+                }
+
             } else
                 overflowState = RECEIVE_DATA; // master want writing - receiving
             SET_USI_TO_SEND_ACK();
         } else
             SET_USI_TO_TWI_START_CONDITION_MODE();
         break;
+    }
 
     /***************************************************************************************/
 
     // from here we just drop straight into USI_SLAVE_SEND_DATA if the
     // master sent an ACK
     // copy data from buffer to USIDR and set USI to shift byte
-    case SEND_DATA:
-        tmp = requestCall(startCounter++);
+    case SEND_DATA: {
+        int16_t tmp = requestCall(startCounter++);
         if(tmp >= 0)
             USI::data = tmp;
         else {
@@ -157,6 +174,7 @@ void UsiTwiSlave::overflowHandler()
         overflowState = CHECK_ACK_FROM_SEND_DATA;
         SET_USI_TO_SEND_DATA();
         break;
+    }
 
     /***************************************************************************************/
 

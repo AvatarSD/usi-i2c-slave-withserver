@@ -9,7 +9,9 @@ class UsiTwiSlave;
 class I2CSlaveServer
 {
 public:
-    void setup();
+    void setup(uint8_t addr);
+    uint8_t getAddress();
+    void setAddress(uint8_t addr);
 
 private:
     int8_t receiveEvent(uint8_t num, uint8_t data);
@@ -20,7 +22,6 @@ private:
     const uint16_t reg_size;
 
     UsiTwiSlave * device;
-    uint8_t address;
 
     I2CSlaveServer();
     I2CSlaveServer(const I2CSlaveServer &) = default;
