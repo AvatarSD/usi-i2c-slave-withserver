@@ -5,10 +5,6 @@
 
 
 
-//data regs:
-volatile uint8_t & USI::data = USIDR;
-volatile uint8_t & USI::buffer = USIBR;
-
 //status regs:
 void USI::setStatus(bool start, bool ovf, bool stop, bool collision,
                     uint8_t counter)
@@ -182,18 +178,16 @@ void USI::disableForceHoldSCL()
     PORT_USI |= _BV(PORT_USI_SCL);
 }
 
-// isr`s
-void (*USI::startConditionHandler)();
-void(*USI::overflowHandler)();
+USI::USI() : data(USIDR), buffer(USIBR) {}
 
 ISR(USI_START_VECTOR)
 {
-    if(USI::startConditionHandler)
-        USI::startConditionHandler();
+    if(USI::getInstance()->startConditionHandler)
+        USI::getInstance()->startConditionHandler();
 }
 
 ISR(USI_OVERFLOW_VECTOR)
 {
-    if(USI::overflowHandler)
-        USI::overflowHandler();
+    if(USI::getInstance()->overflowHandler)
+        USI::getInstance()->overflowHandler();
 }

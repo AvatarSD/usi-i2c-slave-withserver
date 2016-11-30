@@ -8,12 +8,20 @@
 #define OK 0
 #define ERR -1
 
-typedef int8_t(*ReceiveHandler)(uint8_t, uint8_t);
-typedef int16_t(*RequestHandler)(uint8_t);
+
+
+class USI;
+
 
 class UsiTwiSlave
 {
 public:
+    typedef int8_t(*ReceiveHandler)(uint8_t, uint8_t);
+    typedef int16_t(*RequestHandler)(uint8_t);
+
+
+    UsiTwiSlave(USI & usi);
+
     void init(uint8_t address);
 
     uint8_t getAddress();
@@ -22,7 +30,6 @@ public:
     void onReceiveSetHandler(ReceiveHandler);
     void onRequestSetHandler(RequestHandler);
 
-    static UsiTwiSlave * getInstance();
 
 private:
     enum TwiSlaveState {
@@ -38,13 +45,13 @@ private:
         GET_DATA_AND_SEND_ACK = 0x05
     };
 
-    static void startConditionVec();
-    static void overflowVec();
     void startConditionHandler();
     void overflowHandler();
 
     uint8_t slaveAddress;
     volatile TwiSlaveState overflowState;
+
+    uint8_t startCounter;
 
     void SET_USI_TO_TWI_START_CONDITION_MODE();
     void SET_USI_TO_SEND_ACK();
@@ -52,17 +59,13 @@ private:
     void SET_USI_TO_SEND_DATA();
     void SET_USI_TO_READ_DATA();
 
-    uint8_t startCounter;
-
     int16_t requestCall(uint8_t);
     int8_t receiveCall(uint8_t num, uint8_t data);
 
     RequestHandler onRequest;
     ReceiveHandler onReceiver;
 
-    UsiTwiSlave();
-    UsiTwiSlave(const UsiTwiSlave &) {}
-    UsiTwiSlave & operator=(UsiTwiSlave &) = default;
+    USI * usi;
 
 };
 

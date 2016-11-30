@@ -25,70 +25,76 @@ class USI
 {
 public:
     //isr's
-    static void (*startConditionHandler)();
-    static void(*overflowHandler)();
+    void (*startConditionHandler)();
+    void(*overflowHandler)();
 
     //data
-    static volatile uint8_t & data;
+    volatile uint8_t & data;
 
     //buffer
-    static volatile uint8_t & buffer;
+    volatile uint8_t & buffer;
 
     //status
-    static void setStatus(bool start,
-                          bool ovf,
-                          bool stop,
-                          bool collision,
-                          uint8_t counter);
+    void setStatus(bool start,
+                   bool ovf,
+                   bool stop,
+                   bool collision,
+                   uint8_t counter);
 
-    static bool getStartCondIntFlag();
-    static void clearStartCondIntFlag();
-    static void releaseStartCondLock();
+    bool getStartCondIntFlag();
+    void clearStartCondIntFlag();
+    void releaseStartCondLock();
 
-    static bool getOvfIntFlag();
-    static void clearOvfIntFlag();
-    static void releaseOvfCondLock();
+    bool getOvfIntFlag();
+    void clearOvfIntFlag();
+    void releaseOvfCondLock();
 
-    static bool getStopCondIntFlag();
-    static void clearStopCondIntFlag();
+    bool getStopCondIntFlag();
+    void clearStopCondIntFlag();
 
-    static bool haveCollision();
-    static void clearCollisionFlag();
+    bool haveCollision();
+    void clearCollisionFlag();
 
-    static uint8_t counterValue();
-    static void setCounterValue(uint8_t val);
+    uint8_t counterValue();
+    void setCounterValue(uint8_t val);
 
     //control register
-    static void enableStartInt();
-    static void disableStartInt();
+    void enableStartInt();
+    void disableStartInt();
 
-    static void enableOvfInt();
-    static void disableOvfInt();
+    void enableOvfInt();
+    void disableOvfInt();
 
-    static void setWireMode(WireMode);
-    static WireMode getWireMode();
+    void setWireMode(WireMode);
+    WireMode getWireMode();
 
-    static void setClockMode(ClockMode);
-    static ClockMode getClockMode();
+    void setClockMode(ClockMode);
+    ClockMode getClockMode();
 
-    static void shiftClockStrobeCounter();
-    static void toggleClockPortPin();
+    void shiftClockStrobeCounter();
+    void toggleClockPortPin();
 
     //direct accses to pin's
-    static void enableSDAOpenDrain();
-    static void disableSDAOpenDrain();
-    static bool getSDAState();
-    static void enableForceHoldSDA();
-    static void disableForceHoldSDA();
-    static void enableSCLOpenDrain();
-    static void disableSCLOpenDrain();
-    static bool getSCLState();
-    static void enableForceHoldSCL();
-    static void disableForceHoldSCL();
+    void enableSDAOpenDrain();
+    void disableSDAOpenDrain();
+    bool getSDAState();
+    void enableForceHoldSDA();
+    void disableForceHoldSDA();
+    void enableSCLOpenDrain();
+    void disableSCLOpenDrain();
+    bool getSCLState();
+    void enableForceHoldSCL();
+    void disableForceHoldSCL();
+
+    static USI * instance()
+    {
+        static USI usi;
+        return &usi;
+    }
 
 private:
-    USI() {}
-    USI(const USI &) {}
+    USI();
+    USI(const USI &) = delete;
     USI & operator=(const USI &) = delete;
 };
 
