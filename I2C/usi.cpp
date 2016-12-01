@@ -6,6 +6,18 @@
 
 
 //status regs:
+void USI::isrOvfl()
+{
+    if(USI::instance()->usiIsr)
+        USI::instance()->usiIsr->overflowHandler();
+}
+
+void USI::isrStrt()
+{
+    if(USI::instance()->usiIsr)
+        USI::instance()->usiIsr->startConditionHandler();
+}
+
 void USI::setStatus(bool start, bool ovf, bool stop, bool collision,
                     uint8_t counter)
 {
@@ -182,12 +194,10 @@ USI::USI() : data(USIDR), buffer(USIBR) {}
 
 ISR(USI_START_VECTOR)
 {
-    if(USI::getInstance()->startConditionHandler)
-        USI::getInstance()->startConditionHandler();
+    USI::instance()->isrStrt();
 }
 
 ISR(USI_OVERFLOW_VECTOR)
 {
-    if(USI::getInstance()->overflowHandler)
-        USI::getInstance()->overflowHandler();
+    USI::instance()->isrOvfl();
 }

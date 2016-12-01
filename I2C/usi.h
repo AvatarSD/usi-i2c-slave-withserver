@@ -21,12 +21,24 @@ enum ClockMode {
 };
 
 
+class iUSIcallback
+{
+public:
+    virtual void startConditionHandler();
+    virtual void overflowHandler();
+};
+
+
 class USI
 {
 public:
-    //isr's
-    void (*startConditionHandler)();
-    void(*overflowHandler)();
+    void setIsrHandler(iUSIcallback * handler)
+    {
+        usiIsr = handler;
+    }
+
+    void isrOvfl();
+    void isrStrt();
 
     //data
     volatile uint8_t & data;
@@ -96,6 +108,9 @@ private:
     USI();
     USI(const USI &) = delete;
     USI & operator=(const USI &) = delete;
+
+    //isr's
+    iUSIcallback * usiIsr = 0;
 };
 
 #endif

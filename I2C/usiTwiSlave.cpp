@@ -1,25 +1,21 @@
 #include "usi.h"
 #include "usiTwiSlave.h"
-#include <conf.h>
 
 
-UsiTwiSlave::UsiTwiSlave(USI & usi) : usi(&usi)
+UsiTwiSlave::UsiTwiSlave(USI * usi) : usi(usi)
 {
     startCounter = 0;
     slaveAddress = 0;
-    usi->overflowHandler = &overflowVec;
-    usi->startConditionHandler = &startConditionVec;
+    multicastAddress = 0;
+    this->usi->setIsrHandler(this);
 }
 
-UsiTwiSlave * UsiTwiSlave::getInstance()
+void UsiTwiSlave::init(iServer * server, uint8_t address,
+                       uint8_t multicastAddress)
 {
-    static UsiTwiSlave instance;
-    return &instance;
-}
-
-void UsiTwiSlave::init(uint8_t address)
-{
+    onEventHandler(server);
     setAddress(address);
+    setMulticastAddress(multicastAddress);
 
     SET_USI_TO_TWI_START_CONDITION_MODE();
     // set SCL high
@@ -30,6 +26,11 @@ void UsiTwiSlave::init(uint8_t address)
     usi->enableSCLOpenDrain();
 }
 
+void UsiTwiSlave::onEventHandler(iServer * server)
+{
+    this->server = server;
+}
+
 uint8_t UsiTwiSlave::getAddress()
 {
     return slaveAddress;
@@ -38,6 +39,16 @@ uint8_t UsiTwiSlave::getAddress()
 void UsiTwiSlave::setAddress(uint8_t addr)
 {
     slaveAddress = addr;
+}
+
+uint8_t UsiTwiSlave::getMulticastAddress()
+{
+    return multicastAddress;
+}
+
+void UsiTwiSlave::setMulticastAddress(uint8_t addr)
+{
+    multicastAddress = addr;
 }
 
 
@@ -126,7 +137,6 @@ void UsiTwiSlave::startConditionHandler()
     usi->setStatus(1, 1, 1, 1, 0x00);
 }
 
-
 void UsiTwiSlave::overflowHandler()
 {
     uint8_t dataRegBuff = usi->data;
@@ -140,13 +150,13 @@ void UsiTwiSlave::overflowHandler()
         bool rw = dataRegBuff & 0x01;
         dataRegBuff >>= 1;
 
-        if((dataRegBuff == MULTICAST_ADDRESS) || (dataRegBuff == slaveAddress)) {
+        if((dataRegBuff == multicastAddress) || (dataRegBuff == slaveAddress)) {
             if(!rw) {
                 overflowState = RECEIVE_DATA; // master want writing - receiving
                 SET_USI_TO_SEND_ACK();
                 break;
             }
-            if((dataRegBuff == MULTICAST_ADDRESS) && (slaveAddress != MULTICAST_ADDRESS))  {
+            if((dataRegBuff == multicastAddress) && (slaveAddress != multicastAddress))  {
                 SET_USI_TO_TWI_START_CONDITION_MODE();
                 break;
             }
@@ -223,34 +233,14 @@ void UsiTwiSlave::overflowHandler()
 
 int8_t UsiTwiSlave::receiveCall(uint8_t num, uint8_t data)
 {
-    if(onReceiver)
-        return onReceiver(num, data);
+    if(server)
+        return server->onReceiver(num, data);
     return ERR;
 }
 
 int16_t UsiTwiSlave::requestCall(uint8_t num)
 {
-    if(onRequest)
-        return onRequest(num);
+    if(server)
+        return server->onRequest(num);
     return ERR;
-}
-
-void UsiTwiSlave::onReceiveSetHandler(ReceiveHandler func)
-{
-    onReceiver = func;
-}
-
-void UsiTwiSlave::onRequestSetHandler(RequestHandler func)
-{
-    onRequest = func;
-}
-
-void UsiTwiSlave::startConditionVec()
-{
-    getInstance()->startConditionHandler();
-}
-
-void UsiTwiSlave::overflowVec()
-{
-    getInstance()->overflowHandler();
 }

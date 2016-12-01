@@ -4,20 +4,16 @@
  */
 
 #include "server.h"
-#include <usiTwiSlave.h>
 #include <memory.h>
-#include <settings.h>
 
 
-I2CSlaveServer::I2CSlaveServer(Memory & memory, UsiTwiSlave & device,
-                               uint8_t addr) :
-    memory(&memory),
-    device(&device),
-    reg_size(memory.mapsize()), reg_position(0)
+I2CSlaveServer::I2CSlaveServer(iMappedMemory * memory, UsiTwiSlave * device,
+                               uint8_t addr, uint8_t multicastaddr) :
+    memory(memory), device(device),
+    reg_size(memory->mapsize()), reg_position(0)
 {
-    this->device->init(addr);
-    //this->device->onReceiveSetHandler(&this->receivetIsrVec); // TODO
-    //this->device->onRequestSetHandler(&this->requestIsrVec);
+    this->device->init(this, addr, multicastaddr);
+
 }
 
 
@@ -32,14 +28,13 @@ void I2CSlaveServer::setAddress(uint8_t addr)
 }
 
 
-// instance handlers
-int16_t I2CSlaveServer::requestEvent(uint8_t)
+int16_t I2CSlaveServer::onRequest(uint8_t)
 {
     if(reg_position >= reg_size)
         return ERR;
     return memory->read(reg_position++);
 }
-int8_t I2CSlaveServer::receiveEvent(uint8_t num, uint8_t data)
+int8_t I2CSlaveServer::onReceiver(uint8_t num, uint8_t data)
 {
     if(num == 0) {
         if(data < reg_size)
