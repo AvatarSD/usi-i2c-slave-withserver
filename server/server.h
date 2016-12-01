@@ -8,9 +8,18 @@
 class iMappedMemory
 {
 public:
-    virtual int8_t write(uint8_t addr, uint8_t data) = 0;
-    virtual int16_t read(uint8_t addr) = 0;
-    virtual uint16_t mapsize() = 0;
+    virtual int8_t write(uint8_t addr, uint8_t data)
+    {
+        return ERR;
+    }
+    virtual int16_t read(uint8_t addr)
+    {
+        return ERR;
+    }
+    virtual uint16_t mapsize()
+    {
+        return ERR;
+    }
 };
 
 
