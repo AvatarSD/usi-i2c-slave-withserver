@@ -24,7 +24,7 @@ public:
 };
 
 
-class UsiTwiSlave : public iUSIcallback
+class UsiTwiSlave : public iUSI
 {
 public:
 
@@ -40,6 +40,10 @@ public:
     void setMulticastAddress(uint8_t addr);
 
     void onEventHandler(iServer * server);
+
+    // port side handlers
+    void startConditionHandler() override;
+    void overflowHandler() override;
 
 private:
     enum TwiSlaveState {
@@ -69,10 +73,6 @@ private:
     void SET_USI_TO_READ_ACK();
     void SET_USI_TO_SEND_DATA();
     void SET_USI_TO_READ_DATA();
-
-    // port side handlers
-    void startConditionHandler() final;
-    void overflowHandler() final;
 
     // soft side handlers
     int16_t requestCall(uint8_t);

@@ -8,14 +8,14 @@
 //status regs:
 void USI::isrOvfl()
 {
-    if(USI::instance()->usiIsr)
-        USI::instance()->usiIsr->overflowHandler();
+    if(usiIsr)
+        usiIsr->overflowHandler();
 }
 
 void USI::isrStrt()
 {
-    if(USI::instance()->usiIsr)
-        USI::instance()->usiIsr->startConditionHandler();
+    if(usiIsr)
+        usiIsr->startConditionHandler();
 }
 
 void USI::setStatus(bool start, bool ovf, bool stop, bool collision,
@@ -190,7 +190,7 @@ void USI::disableForceHoldSCL()
     PORT_USI |= _BV(PORT_USI_SCL);
 }
 
-USI::USI() : data(USIDR), buffer(USIBR) {}
+USI::USI() : data(USIDR), buffer(USIBR), usiIsr(nullptr) {}
 
 ISR(USI_START_VECTOR)
 {

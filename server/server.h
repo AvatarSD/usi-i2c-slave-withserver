@@ -33,8 +33,8 @@ public:
     UsiTwiSlave * getNetworkObject();
 
 private:
-    int8_t onReceiver(uint8_t num, uint8_t data) final;
-    int16_t onRequest(uint8_t num) final;
+    int8_t onReceiver(uint8_t num, uint8_t data) override;
+    int16_t onRequest(uint8_t num)  override;
 
     iMappedMemory * memory;
     UsiTwiSlave * network;
