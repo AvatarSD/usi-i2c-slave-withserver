@@ -4,7 +4,6 @@
  */
 
 #include "server.h"
-#include <memory.h>
 
 
 I2CSlaveServer::I2CSlaveServer(iMappedMemory * memory, UsiTwiSlave * device,

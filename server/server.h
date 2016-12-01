@@ -2,7 +2,7 @@
 #define I2C_SERVER_H
 
 #include <inttypes.h>
-#include <usiTwiSlave.h>
+#include "../I2C/usiTwiSlave.h"
 
 
 class iMappedMemory
