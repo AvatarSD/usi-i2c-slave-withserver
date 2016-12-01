@@ -6,26 +6,23 @@
 #include "server.h"
 
 
-I2CSlaveServer::I2CSlaveServer(iMappedMemory * memory, UsiTwiSlave * device,
-                               uint8_t addr, uint8_t multicastaddr) :
-    memory(memory), device(device),
+I2CSlaveServer::I2CSlaveServer(UsiTwiSlave * net,
+                               iMappedMemory * memory) :
+    memory(memory), network(net),
     reg_size(memory->mapsize()), reg_position(0)
 {
-    this->device->init(this, addr, multicastaddr);
-
+    this->network->onEventHandler(this);
 }
 
-
-uint8_t I2CSlaveServer::getAddress()
+iMappedMemory * I2CSlaveServer::getMemoryObject()
 {
-    return device->getAddress();
+    return memory;
 }
 
-void I2CSlaveServer::setAddress(uint8_t addr)
+UsiTwiSlave * I2CSlaveServer::getNetworkObject()
 {
-    device->setAddress(addr);
+    return network;
 }
-
 
 int16_t I2CSlaveServer::onRequest(uint8_t)
 {

@@ -10,21 +10,6 @@ UsiTwiSlave::UsiTwiSlave(USI * usi) : usi(usi)
     this->usi->setIsrHandler(this);
 }
 
-void UsiTwiSlave::init(iServer * server, uint8_t address,
-                       uint8_t multicastAddress)
-{
-    onEventHandler(server);
-    setAddress(address);
-    setMulticastAddress(multicastAddress);
-
-    SET_USI_TO_TWI_START_CONDITION_MODE();
-    // set SCL high
-    usi->disableForceHoldSCL();
-    // set SDA high
-    usi->disableForceHoldSDA();
-    // Set SDA as input
-    usi->enableSCLOpenDrain();
-}
 
 void UsiTwiSlave::onEventHandler(iServer * server)
 {
@@ -49,6 +34,17 @@ uint8_t UsiTwiSlave::getMulticastAddress()
 void UsiTwiSlave::setMulticastAddress(uint8_t addr)
 {
     multicastAddress = addr;
+}
+
+void UsiTwiSlave::init()
+{
+    SET_USI_TO_TWI_START_CONDITION_MODE();
+    // set SCL high
+    usi->disableForceHoldSCL();
+    // set SDA high
+    usi->disableForceHoldSDA();
+    // Set SDA as input
+    usi->enableSCLOpenDrain();
 }
 
 

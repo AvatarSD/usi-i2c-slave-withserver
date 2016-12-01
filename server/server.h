@@ -8,9 +8,18 @@
 class iMappedMemory
 {
 public:
-    virtual int8_t write(uint8_t addr, uint8_t data) = 0;
-    virtual int16_t read(uint8_t addr) = 0;
-    virtual uint16_t mapsize() = 0;
+    virtual int8_t write(uint8_t addr, uint8_t data)
+    {
+        return ERR;
+    }
+    virtual int16_t read(uint8_t addr)
+    {
+        return ERR;
+    }
+    virtual uint16_t mapsize()
+    {
+        return ERR;
+    }
 };
 
 
@@ -18,18 +27,17 @@ public:
 class I2CSlaveServer : public iServer
 {
 public:
-    I2CSlaveServer(iMappedMemory * memory, UsiTwiSlave * device,
-                   uint8_t addr, uint8_t multicastaddr);
+    I2CSlaveServer(UsiTwiSlave * net, iMappedMemory * memory);
 
-    uint8_t getAddress();
-    void setAddress(uint8_t addr);
+    iMappedMemory * getMemoryObject();
+    UsiTwiSlave * getNetworkObject();
 
 private:
     int8_t onReceiver(uint8_t num, uint8_t data) final;
     int16_t onRequest(uint8_t num) final;
 
     iMappedMemory * memory;
-    UsiTwiSlave * device;
+    UsiTwiSlave * network;
 
     // Tracks the current register pointer position
     const uint16_t reg_size;

@@ -13,8 +13,14 @@
 class iServer
 {
 public:
-    virtual int16_t onRequest(uint8_t);
-    virtual int8_t onReceiver(uint8_t, uint8_t);
+    virtual int8_t onReceiver(uint8_t, uint8_t)
+    {
+        return ERR;
+    }
+    virtual int16_t onRequest(uint8_t)
+    {
+        return ERR;
+    }
 };
 
 
@@ -24,7 +30,8 @@ public:
 
     UsiTwiSlave(USI * usi);
 
-    void init(iServer * server, uint8_t address, uint8_t multicastAddress);
+    void init();
+    //void init(iServer * server, uint8_t address, uint8_t multicastAddress);
 
     uint8_t getAddress();
     void setAddress(uint8_t addr);
@@ -48,8 +55,8 @@ private:
         GET_DATA_AND_SEND_ACK = 0x05
     };
 
-    USI * usi;
-    iServer * server;
+    iServer * server; //upper
+    USI * usi;        //lower
 
     uint8_t slaveAddress;
     uint8_t multicastAddress;

@@ -24,8 +24,8 @@ enum ClockMode {
 class iUSIcallback
 {
 public:
-    virtual void startConditionHandler();
-    virtual void overflowHandler();
+    virtual void startConditionHandler() {}
+    virtual void overflowHandler() {}
 };
 
 
