@@ -47,6 +47,18 @@ void UsiTwiSlave::init()
     usi->enableSCLOpenDrain();
 }
 
+void UsiTwiSlave::init(uint8_t slaveAdress)
+{
+    setAddress(slaveAdress);
+    init();
+}
+
+void UsiTwiSlave::init(uint8_t slaveAdress, uint8_t multicastAdress)
+{
+    setMulticastAddress(multicastAdress);
+    init(slaveAdress);
+}
+
 
 void UsiTwiSlave::SET_USI_TO_TWI_START_CONDITION_MODE()
 {

@@ -31,7 +31,8 @@ public:
     UsiTwiSlave(USI * usi);
 
     void init();
-    //void init(iServer * server, uint8_t address, uint8_t multicastAddress);
+    void init(uint8_t slaveAdress);
+    void init(uint8_t slaveAdress, uint8_t multicastAdress);
 
     uint8_t getAddress();
     void setAddress(uint8_t addr);
