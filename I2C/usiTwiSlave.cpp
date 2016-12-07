@@ -147,19 +147,13 @@ void UsiTwiSlave::overflowHandler()
         dataRegBuff >>= 1;
 
         if((dataRegBuff == multicastAddress) || (dataRegBuff == slaveAddress)) {
-            if(!rw) {
+            if(rw)
+                overflowState = SEND_DATA;  // master want reading - transmitting
+            else
                 overflowState = RECEIVE_DATA; // master want writing - receiving
-                SET_USI_TO_SEND_ACK();
-                break;
-            }
-            if((dataRegBuff == multicastAddress) && (slaveAddress != multicastAddress))  {
-                SET_USI_TO_TWI_START_CONDITION_MODE();
-                break;
-            }
-            overflowState = SEND_DATA;  // master want reading - transmitting
+
             SET_USI_TO_SEND_ACK();
             break;
-
 
         }
         SET_USI_TO_TWI_START_CONDITION_MODE();
@@ -172,6 +166,12 @@ void UsiTwiSlave::overflowHandler()
     // master sent an ACK
     // copy data from buffer to USIDR and set USI to shift byte
     case SEND_DATA: {
+        //if master want reat by multicast address and slave addres was set previousli - do not ask
+        if((dataRegBuff == multicastAddress) && (slaveAddress != multicastAddress))  {
+            SET_USI_TO_TWI_START_CONDITION_MODE();
+            break;
+        }
+
         int16_t tmp = requestCall(startCounter++);
         if(tmp >= 0)
             usi->data = tmp;
