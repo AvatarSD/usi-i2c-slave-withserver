@@ -2,11 +2,11 @@
 #include "usiTwiSlave.h"
 
 
-UsiTwiSlave::UsiTwiSlave(USI * usi) : usi(usi)
+UsiTwiSlave::UsiTwiSlave(USI * usi, uint8_t multicastAdress) : usi(usi),
+    multicastAddress(multicastAdress)
 {
     startCounter = 0;
     slaveAddress = 0;
-    multicastAddress = 0;
     this->usi->setIsrHandler(this);
 }
 
@@ -31,11 +31,6 @@ uint8_t UsiTwiSlave::getMulticastAddress()
     return multicastAddress;
 }
 
-void UsiTwiSlave::setMulticastAddress(uint8_t addr)
-{
-    multicastAddress = addr;
-}
-
 void UsiTwiSlave::init()
 {
     SET_USI_TO_TWI_START_CONDITION_MODE();
@@ -52,13 +47,6 @@ void UsiTwiSlave::init(uint8_t slaveAdress)
     setAddress(slaveAdress);
     init();
 }
-
-void UsiTwiSlave::init(uint8_t slaveAdress, uint8_t multicastAdress)
-{
-    setMulticastAddress(multicastAdress);
-    init(slaveAdress);
-}
-
 
 void UsiTwiSlave::SET_USI_TO_TWI_START_CONDITION_MODE()
 {

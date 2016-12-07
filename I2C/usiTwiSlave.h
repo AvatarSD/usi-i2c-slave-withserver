@@ -28,17 +28,15 @@ class UsiTwiSlave : public iUSI
 {
 public:
 
-    UsiTwiSlave(USI * usi);
+    UsiTwiSlave(USI * usi, uint8_t multicastAdress);
 
     void init();
     void init(uint8_t slaveAdress);
-    void init(uint8_t slaveAdress, uint8_t multicastAdress);
 
     uint8_t getAddress();
     void setAddress(uint8_t addr);
 
     uint8_t getMulticastAddress();
-    void setMulticastAddress(uint8_t addr);
 
     void onEventHandler(iServer * server);
 
@@ -64,7 +62,7 @@ private:
     USI * usi;        //lower
 
     uint8_t slaveAddress;
-    uint8_t multicastAddress;
+    const uint8_t multicastAddress;
 
     volatile TwiSlaveState overflowState;
     volatile uint8_t startCounter;
