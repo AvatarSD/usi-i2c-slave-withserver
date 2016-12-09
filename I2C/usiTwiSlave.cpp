@@ -16,7 +16,7 @@ void UsiTwiSlave::onEventHandler(IServer * server)
     this->server = server;
 }
 
-uint8_t UsiTwiSlave::getAddress()
+uint8_t UsiTwiSlave::getAddress() const
 {
     return slaveAddress;
 }
@@ -26,7 +26,7 @@ void UsiTwiSlave::setAddress(uint8_t addr)
     slaveAddress = addr;
 }
 
-uint8_t UsiTwiSlave::getMulticastAddress()
+uint8_t UsiTwiSlave::getMulticastAddress() const
 {
     return multicastAddress;
 }

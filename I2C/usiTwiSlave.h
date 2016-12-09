@@ -10,6 +10,17 @@
 #define ERR -1
 
 
+class ISlaveAddress
+{
+    virtual void setAddress(uint8_t addr);
+    virtual uint8_t getAddress() const;
+};
+
+class IMulticastAddress
+{
+    virtual uint8_t getMulticastAddress() const;
+};
+
 class IServer
 {
 public:
@@ -23,15 +34,15 @@ public:
     }
 };
 
-class ITwiSlave
+class ITwiSlave : public ISlaveAddress, public IMulticastAddress
 {
 public:
     virtual void init(uint8_t slaveAdress);
 
-    virtual uint8_t getAddress();
+    virtual uint8_t getAddress() const;
     virtual void setAddress(uint8_t addr);
 
-    virtual uint8_t getMulticastAddress();
+    virtual uint8_t getMulticastAddress() const;
 
     virtual void onEventHandler(IServer * server);
 };
@@ -45,10 +56,10 @@ public:
     void init();
     void init(uint8_t slaveAdress);
 
-    uint8_t getAddress();
+    uint8_t getAddress() const;
     void setAddress(uint8_t addr);
 
-    uint8_t getMulticastAddress();
+    uint8_t getMulticastAddress() const;
 
     void onEventHandler(IServer * server);
 
