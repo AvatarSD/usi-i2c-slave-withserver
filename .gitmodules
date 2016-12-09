@@ -1,0 +1,3 @@
+[submodule "polymorphmemory"]
+	path = polymorphmemory
+	url = git@github.com:AvatarSD/polymorphmemory.git
