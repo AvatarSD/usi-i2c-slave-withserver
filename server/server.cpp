@@ -6,20 +6,20 @@
 #include "server.h"
 
 
-I2CSlaveServer::I2CSlaveServer(UsiTwiSlave * net,
-                               iMappedMemory * memory) :
+I2CSlaveServer::I2CSlaveServer(ITwiSlave * net,
+                               IMappedMemory * memory) :
     memory(memory), network(net),
     reg_size(memory->mapsize()), reg_position(0)
 {
     this->network->onEventHandler(this);
 }
 
-iMappedMemory * I2CSlaveServer::getMemoryObject()
+IMappedMemory * I2CSlaveServer::getMemoryObject()
 {
     return memory;
 }
 
-UsiTwiSlave * I2CSlaveServer::getNetworkObject()
+ITwiSlave * I2CSlaveServer::getNetworkObject()
 {
     return network;
 }

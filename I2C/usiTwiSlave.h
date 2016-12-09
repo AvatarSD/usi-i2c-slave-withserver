@@ -10,7 +10,7 @@
 #define ERR -1
 
 
-class iServer
+class IServer
 {
 public:
     virtual int8_t onReceiver(uint8_t, uint8_t)
@@ -23,8 +23,20 @@ public:
     }
 };
 
+class ITwiSlave
+{
+public:
+    virtual void init(uint8_t slaveAdress);
 
-class UsiTwiSlave : public iUSI
+    virtual uint8_t getAddress();
+    virtual void setAddress(uint8_t addr);
+
+    virtual uint8_t getMulticastAddress();
+
+    virtual void onEventHandler(IServer * server);
+};
+
+class UsiTwiSlave : public IUsiEvent, public ITwiSlave
 {
 public:
 
@@ -38,7 +50,7 @@ public:
 
     uint8_t getMulticastAddress();
 
-    void onEventHandler(iServer * server);
+    void onEventHandler(IServer * server);
 
     // port side handlers
     void startConditionHandler() override;
@@ -58,7 +70,7 @@ private:
         GET_DATA_AND_SEND_ACK = 0x05
     };
 
-    iServer * server; //upper
+    IServer * server; //upper
     USI * usi;        //lower
 
     uint8_t slaveAddress;

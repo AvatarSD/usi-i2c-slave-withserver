@@ -11,7 +11,7 @@ UsiTwiSlave::UsiTwiSlave(USI * usi, uint8_t multicastAdress) : usi(usi),
 }
 
 
-void UsiTwiSlave::onEventHandler(iServer * server)
+void UsiTwiSlave::onEventHandler(IServer * server)
 {
     this->server = server;
 }
@@ -51,7 +51,7 @@ void UsiTwiSlave::init(uint8_t slaveAdress)
 void UsiTwiSlave::SET_USI_TO_TWI_START_CONDITION_MODE()
 {
     /* set USI counter to shift 1 bit */
-    /* clear all interrupt flags, except Start Cond */
+    /* clear all interrupt flags //, except Start Cond */
     usi->setStatus(1, 1, 1, 1, 0x00);
     /* set SDA as input */
     usi->disableSDAOpenDrain();
@@ -136,6 +136,7 @@ void UsiTwiSlave::startConditionHandler()
 void UsiTwiSlave::overflowHandler()
 {
     uint8_t dataRegBuff = usi->data;
+    static bool isLastCallMulticast = false;
 
     switch(overflowState) {
 
@@ -146,7 +147,9 @@ void UsiTwiSlave::overflowHandler()
         bool rw = dataRegBuff & 0x01;
         dataRegBuff >>= 1;
 
-        if((dataRegBuff == multicastAddress) || (dataRegBuff == slaveAddress)) {
+        isLastCallMulticast = (dataRegBuff == multicastAddress);
+
+        if(isLastCallMulticast || (dataRegBuff == slaveAddress)) {
             if(rw)
                 overflowState = SEND_DATA;  // master want reading - transmitting
             else
@@ -166,8 +169,8 @@ void UsiTwiSlave::overflowHandler()
     // master sent an ACK
     // copy data from buffer to USIDR and set USI to shift byte
     case SEND_DATA: {
-        //if master want reat by multicast address and slave addres was set previousli - do not ask
-        if((dataRegBuff == multicastAddress) && (slaveAddress != multicastAddress))  {
+        //if master want read by multicast address and slave addres was set previousli - do not ask
+        if(isLastCallMulticast && (slaveAddress != multicastAddress)) {
             SET_USI_TO_TWI_START_CONDITION_MODE();
             break;
         }

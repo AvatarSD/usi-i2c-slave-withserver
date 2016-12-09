@@ -21,7 +21,7 @@ enum ClockMode {
 };
 
 
-class iUSI
+class IUsiEvent
 {
 public:
     virtual void startConditionHandler() {}
@@ -32,7 +32,7 @@ public:
 class USI
 {
 public:
-    void setIsrHandler(iUSI * handler)
+    void setIsrHandler(IUsiEvent * handler)
     {
         usiIsr = handler;
     }
@@ -110,7 +110,7 @@ private:
     USI & operator=(const USI &) = delete;
 
     //isr's
-    iUSI * usiIsr;
+    IUsiEvent * usiIsr;
 };
 
 #endif

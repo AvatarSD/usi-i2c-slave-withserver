@@ -5,7 +5,7 @@
 #include "../I2C/usiTwiSlave.h"
 
 
-class iMappedMemory
+class IMappedMemory
 {
 public:
     virtual int8_t write(uint8_t addr, uint8_t data)
@@ -24,20 +24,20 @@ public:
 
 
 
-class I2CSlaveServer : public iServer
+class I2CSlaveServer : public IServer
 {
 public:
-    I2CSlaveServer(UsiTwiSlave * net, iMappedMemory * memory);
+    I2CSlaveServer(ITwiSlave * net, IMappedMemory * memory);
 
-    iMappedMemory * getMemoryObject();
-    UsiTwiSlave * getNetworkObject();
+    IMappedMemory * getMemoryObject();
+    ITwiSlave * getNetworkObject();
 
 private:
     int8_t onReceiver(uint8_t num, uint8_t data) override;
     int16_t onRequest(uint8_t num)  override;
 
-    iMappedMemory * memory;
-    UsiTwiSlave * network;
+    IMappedMemory * memory;
+    ITwiSlave * network;
 
     // Tracks the current register pointer position
     const uint16_t reg_size;
