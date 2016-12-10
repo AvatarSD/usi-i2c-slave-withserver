@@ -47,8 +47,8 @@ public:
 	static Error write(Address addr, uint8_t data, Num num)
 	{
 		//if address is multicast - reset slaveAddress to multicast value immediatly
-		if(data == keeper->getMulticastAddress()) {
-			keeper->setAddress(data);
+		if(data == keeper.getMulticastAddress()) {
+			keeper.setAddress(data);
 			newAddr = ERR;
 			return OK;
 		}
@@ -94,14 +94,14 @@ public:
 	static ReadType read(Address addr, Num num = 0)
 	{
 		if(newAddr != ERR)
-			keeper->setAddress(newAddr);
+			keeper.setAddress(newAddr);
 
 		newAddr = ERR;
-		return keeper->getAddress();
+		return keeper.getAddress();
 	}
 
 private:
-	static AddressKeeper<multicastAddrKpr, adressKeeper, adressKeepers...> * keeper;
+	static AddressKeeper<multicastAddrKpr, adressKeeper, adressKeepers...> keeper;
 };
 
 
