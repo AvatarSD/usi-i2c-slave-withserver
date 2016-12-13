@@ -1,27 +1,54 @@
 #ifndef SLAVEADDRES_H
 #define SLAVEADDRES_H
 
-#include <polymorphmemory.h>
-#include <usiTwiSlave.h>
+//#include <polymorphmemory.h>
+//#include <usiTwiSlave.h>
+
+#include "../polymorphmemory/polymorphmemory.h"
+#include "../I2C/usiTwiSlave.h"
 
 
 
-template<IMulticastAddress * multicastAddrKpr,
-         ISlaveAddress * adressKeeper,
-         ISlaveAddress * ... adressKeepers>
+
+
+template<size_t additionalAddr = 0>
 class AddressKeeper : public ISlaveAddress, public IMulticastAddress
 {
 public:
-	template<ISlaveAddress * keeper,
-	         ISlaveAddress * ... keepers>
+
+	template <ISlaveAddress * ... rest>
+	AddressKeeper(IMulticastAddress * addr, ISlaveAddress * n,
+	              ISlaveAddress * ... rest) :
+	    multicastAddrKpr(addr), AddressKeeper(additionalAddr, rest...)
+	{
+		static_assert(sizeof...(rest) == additionalAddr, "param amaunt is not valid");
+
+		addrs[0];
+
+	}
+
+private:
+
+	template <ISlaveAddress * ... rest>
+	AddressKeeper(int amount, ISlaveAddress * n,
+	              ISlaveAddress * ... rest): AddressKeeper(--amount, rest...)
+	{
+		addrs[amount] = n;
+	}
+	AddressKeeper(int amount) {}
+
+
+public:
+
+
 	void setAddress(uint8_t addr)
 	{
-		keeper->setAddress(addr);
-		setAddress<keepers...>(addr);
+		for(uint8_t i = 0; i <= additionalAddr; i++)
+			addrs[i] = addr;
 	}
 	uint8_t getAddress()
 	{
-		return adressKeeper->getAddress();
+		return addrs[0]->getAddress();
 	}
 	uint8_t getMulticastAddress()
 	{
@@ -29,24 +56,30 @@ public:
 	}
 
 private:
-	void setAddress(uint8_t addr){}
+	ISlaveAddress * addrs[additionalAddr + 1];
+	IMulticastAddress * multicastAddrKpr;
 };
 
 
 
 
-
-template<IMulticastAddress * multicastAddrKpr,
-         ISlaveAddress * adressKeeper,
-         ISlaveAddress * ... adressKeepers>
+template<>
 class SlaveAddress : public Composite<uint8_t>
 {
 public:
-	static int16_t newAddr;
 
-	static Error write(Address addr, uint8_t data, Num num)
+	//template<>
+	SlaveAddress(IMulticastAddress * multicastAddrKpr,
+	             ISlaveAddress * adressKeeper,
+	             ISlaveAddress * ... adressKeepers) //: keepersSize(sizeof...(adressKeepers))
 	{
-		//if address is multicast - reset slaveAddress to multicast value immediatly
+
+	}
+
+
+	Error write(Address addr, uint8_t data, Num num)
+	{
+		/*if address is multicast - reset slaveAddress to multicast value immediatly*/
 		if(data == keeper.getMulticastAddress()) {
 			keeper.setAddress(data);
 			newAddr = ERR;
@@ -91,7 +124,7 @@ public:
 		newAddr = data;
 		return OK;
 	}
-	static ReadType read(Address addr, Num num = 0)
+	ReadType read(Address addr, Num num = 0)
 	{
 		if(newAddr != ERR)
 			keeper.setAddress(newAddr);
@@ -101,7 +134,9 @@ public:
 	}
 
 private:
-	static AddressKeeper<multicastAddrKpr, adressKeeper, adressKeepers...> keeper;
+//	uint8_t keepersSize;
+	int16_t newAddr;
+	AddressKeeper<sizeof...(adressKeepers)> keeper;
 };
 
 
