@@ -12,12 +12,14 @@
 
 class ISlaveAddress
 {
+public:
     virtual void setAddress(uint8_t addr);
     virtual uint8_t getAddress() const;
 };
 
 class IMulticastAddress
 {
+public:
     virtual uint8_t getMulticastAddress() const;
 };
 

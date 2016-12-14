@@ -5,50 +5,16 @@
 #include <usiTwiSlave.h>
 
 
-
-template<IMulticastAddress * multicastAddrKpr,
-         ISlaveAddress * adressKeeper,
-         ISlaveAddress * ... adressKeepers>
-class AddressKeeper : public ISlaveAddress, public IMulticastAddress
-{
-public:
-	template<ISlaveAddress * keeper,
-	         ISlaveAddress * ... keepers>
-	void setAddress(uint8_t addr)
-	{
-		keeper->setAddress(addr);
-		setAddress<keepers...>(addr);
-	}
-	uint8_t getAddress()
-	{
-		return adressKeeper->getAddress();
-	}
-	uint8_t getMulticastAddress()
-	{
-		return multicastAddrKpr->getMulticastAddress();
-	}
-
-private:
-	void setAddress(uint8_t addr){}
-};
-
-
-
-
-
-template<IMulticastAddress * multicastAddrKpr,
-         ISlaveAddress * adressKeeper,
-         ISlaveAddress * ... adressKeepers>
+template<size_t additionalAddr = 0>
 class SlaveAddress : public Composite<uint8_t>
 {
 public:
-	static int16_t newAddr;
 
 	static Error write(Address addr, uint8_t data, Num num)
 	{
 		//if address is multicast - reset slaveAddress to multicast value immediatly
-		if(data == keeper.getMulticastAddress()) {
-			keeper.setAddress(data);
+		if(data == multicast->getMulticastAddress()) {
+			forAllsetAddress(data);
 			newAddr = ERR;
 			return OK;
 		}
@@ -94,15 +60,55 @@ public:
 	static ReadType read(Address addr, Num num = 0)
 	{
 		if(newAddr != ERR)
-			keeper.setAddress(newAddr);
+			forAllsetAddress(newAddr);
 
 		newAddr = ERR;
-		return keeper.getAddress();
+		return adress[0]->getAddress();
+	}
+
+	template<typename...Keepers>
+	static void setAddreses(IMulticastAddress * multicastAddrKpr,
+	                        ISlaveAddress * keeper,
+	                        Keepers * ...keepers)
+	{
+		adress[0] = keeper;
+
+		static_assert(sizeof...(keepers) == additionalAddr,
+		              "additional slave addresses pointer is not valid");
+
+		_setAddreses(sizeof...(keepers), keepers...);
 	}
 
 private:
-	static AddressKeeper<multicastAddrKpr, adressKeeper, adressKeepers...> keeper;
+	template<typename...Keepers>
+	static void _setAddreses(size_t amount,
+	                         ISlaveAddress * keeper,
+	                         Keepers * ... keepers)
+	{
+		adress[amount] = keeper;
+		_setAddreses(sizeof...(keepers), keepers...);
+	}
+	static void _setAddreses(size_t amount) {}
+
+	static void forAllsetAddress(uint8_t data)
+	{
+		for(uint8_t i = 0; i <= additionalAddr; i++)
+			adress[i]->setAddress(data);
+	}
+
+	static int16_t newAddr;
+	static IMulticastAddress * multicast;
+	static ISlaveAddress * adress[additionalAddr + 1];
 };
+
+template<size_t additionalAddr>
+int16_t SlaveAddress<additionalAddr>::newAddr = ERR;
+
+template<size_t additionalAddr>
+IMulticastAddress * SlaveAddress<additionalAddr>::multicast = nullptr;
+
+template<size_t additionalAddr>
+ISlaveAddress * SlaveAddress<additionalAddr>::adress[additionalAddr + 1];
 
 
 #endif // SLAVEADDRES_H
