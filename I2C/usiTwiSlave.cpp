@@ -135,10 +135,12 @@ void UsiTwiSlave::startConditionHandler()
 
 void UsiTwiSlave::overflowHandler()
 {
-    if(usi->haveCollision()) {
-        SET_USI_TO_TWI_START_CONDITION_MODE();
-        return;
-    }
+    //todo collision check
+
+    //    if(usi->haveCollision()) {
+    //        SET_USI_TO_TWI_START_CONDITION_MODE();
+    //        return;
+    //    }
 
     uint8_t dataRegBuff = usi->data;
     static bool isLastCallMulticast = false;
