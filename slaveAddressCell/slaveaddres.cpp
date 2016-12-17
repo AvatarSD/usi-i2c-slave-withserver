@@ -21,9 +21,9 @@ ReadType SlaveAddress::read(Address addr, Num num)
     return ERR;
 }
 
-void SlaveAddress::setISlaveAddress(ISlaveAddress * iaddress)
+void SlaveAddress::setISlaveAddress(ISlaveAddress * iAddress)
 {
-    iaddress = iaddress;
+    iaddress = iAddress;
 }
 
 ISlaveAddress * SlaveAddress::getISlaveAddress()

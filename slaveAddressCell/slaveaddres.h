@@ -46,7 +46,7 @@ class SlaveAddress : public Composite<uint8_t>
 public:
     static Error write(Address addr, uint8_t data, Num num);
     static ReadType read(Address addr, Num num = 0);
-    static void setISlaveAddress(ISlaveAddress * iaddress);
+    static void setISlaveAddress(ISlaveAddress * iAddress);
     static ISlaveAddress * getISlaveAddress();
 private:
     static int16_t newAddr;
