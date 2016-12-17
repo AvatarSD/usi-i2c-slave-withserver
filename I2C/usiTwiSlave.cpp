@@ -2,14 +2,31 @@
 #include "usiTwiSlave.h"
 
 
-UsiTwiSlave::UsiTwiSlave(USI * usi, I2CAddress multicastAdress) : usi(usi),
-    multicastAddress(multicastAdress)
+
+
+ITwiSlave::ITwiSlave(ISlaveAddress * memory) : memory(memory)
 {
-    startCounter = 0;
-    slaveAddress = 0;
-    this->usi->setIsrHandler(this);
+
 }
 
+
+UsiTwiSlave::UsiTwiSlave(USI * usi,
+                         ISlaveAddress * memory,
+                         I2CAddress multicastAdress) :
+    ITwiSlave(memory),
+    usi(usi),
+    multicastAddress(multicastAdress),
+    startCounter(0)
+{
+    this->usi->setIsrHandler(this);
+    slaveAddress = memory->getAddress();
+}
+
+void UsiTwiSlave::setAddress(I2CAddress addr)
+{
+    slaveAddress = addr;
+    memory->setAddress(addr);
+}
 
 void UsiTwiSlave::onEventHandler(IServer * server)
 {
@@ -19,11 +36,6 @@ void UsiTwiSlave::onEventHandler(IServer * server)
 I2CAddress UsiTwiSlave::getAddress() const
 {
     return slaveAddress;
-}
-
-void UsiTwiSlave::setAddress(I2CAddress addr)
-{
-    slaveAddress = addr;
 }
 
 I2CAddress UsiTwiSlave::getMulticastAddress() const
@@ -40,12 +52,6 @@ void UsiTwiSlave::init()
     usi->disableForceHoldSDA();
     // Set SDA as input
     usi->enableSCLOpenDrain();
-}
-
-void UsiTwiSlave::init(I2CAddress addr)
-{
-    setAddress(addr);
-    init();
 }
 
 void UsiTwiSlave::SET_USI_TO_TWI_START_CONDITION_MODE()

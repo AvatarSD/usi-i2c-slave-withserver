@@ -4,6 +4,7 @@
 #include <polymorphmemory.h>
 #include <usiTwiSlave.h>
 
+//******--| avatarsd.com |--*******//
 /*
  * todo: newAddr to ERR at second read(when first read wasn't be here - slave
  * address will not change).
@@ -40,63 +41,36 @@
  */
 
 
-template<size_t additionalAddr = 0>
 class SlaveAddress : public Composite<uint8_t>
 {
 public:
-
-	static Error write(Address addr, uint8_t data, Num num)
-	{
-		newAddr = data;
-		return OK;
-	}
-	static ReadType read(Address addr, Num num = 0)
-	{
-		if(newAddr != ERR)
-			forAllsetAddress(newAddr);
-
-		newAddr = ERR;
-		return adress[0]->getAddress();
-	}
-
-	template<typename...Keepers>
-	static void setAddreses(ISlaveAddress * keeper,
-	                        Keepers * ...keepers)
-	{
-		adress[0] = keeper;
-
-		static_assert(sizeof...(keepers) == additionalAddr,
-		              "additional slave addresses pointer is not valid");
-
-		_setAddreses(sizeof...(keepers), keepers...);
-	}
-
+    static Error write(Address addr, uint8_t data, Num num)
+    {
+        newAddr = data;
+        return OK;
+    }
+    static ReadType read(Address addr, Num num = 0)
+    {
+        if(!iaddress) {
+            if(newAddr != ERR)
+                iaddress->setAddress(newAddr);
+            newAddr = ERR;
+            return iaddress->getAddress();
+        }
+        newAddr = ERR;
+        return ERR;
+    }
+    static void setISlaveAddress(ISlaveAddress * iaddress)
+    {
+        this->iaddress = iaddress;
+    }
+    static ISlaveAddress * getISlaveAddress()
+    {
+        return this->iaddress;
+    }
 private:
-	template<typename...Keepers>
-	static void _setAddreses(size_t amount,
-	                         ISlaveAddress * keeper,
-	                         Keepers * ... keepers)
-	{
-		adress[amount] = keeper;
-		_setAddreses(sizeof...(keepers), keepers...);
-	}
-	static void _setAddreses(size_t amount) {}
-
-	static void forAllsetAddress(uint8_t data)
-	{
-		for(uint8_t i = 0; i <= additionalAddr; i++)
-			adress[i]->setAddress(data);
-	}
-
-	static int16_t newAddr;
-	static ISlaveAddress * adress[additionalAddr + 1];
+    static int16_t newAddr;
+    static ISlaveAddress * iaddress;
 };
-
-template<size_t additionalAddr>
-int16_t SlaveAddress<additionalAddr>::newAddr = ERR;
-
-template<size_t additionalAddr>
-ISlaveAddress * SlaveAddress<additionalAddr>::adress[additionalAddr + 1];
-
 
 #endif // SLAVEADDRES_H

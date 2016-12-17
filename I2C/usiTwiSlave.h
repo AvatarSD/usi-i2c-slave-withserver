@@ -40,22 +40,27 @@ public:
 class ITwiSlave : public ISlaveAddress, public IMulticastAddress
 {
 public:
+    ITwiSlave(ISlaveAddress * memory);
+
     virtual void init();
-    virtual void init(I2CAddress slaveAdress);
     virtual void onEventHandler(IServer * server);
     virtual I2CAddress getAddress() const;
     virtual void setAddress(I2CAddress addr);
 
     virtual I2CAddress getMulticastAddress() const;
+
+protected:
+    ISlaveAddress * memory;
 };
 
 class UsiTwiSlave : public IUsiEvent, public ITwiSlave
 {
 public:
-    UsiTwiSlave(USI * usi, I2CAddress multicastAdress);
+    UsiTwiSlave(USI * usi,
+                ISlaveAddress * memory,
+                I2CAddress multicastAdress);
 
     void init();
-    void init(I2CAddress addr);
 
     I2CAddress getAddress() const;
     void setAddress(I2CAddress addr);
