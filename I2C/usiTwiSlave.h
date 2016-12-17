@@ -9,18 +9,19 @@
 #define OK 0
 #define ERR -1
 
+typedef uint8_t I2CAddress;
 
 class ISlaveAddress
 {
 public:
-    virtual void setAddress(uint8_t addr);
-    virtual uint8_t getAddress() const;
+    virtual void setAddress(I2CAddress addr);
+    virtual I2CAddress getAddress() const;
 };
 
 class IMulticastAddress
 {
 public:
-    virtual uint8_t getMulticastAddress() const;
+    virtual I2CAddress getMulticastAddress() const;
 };
 
 class IServer
@@ -39,29 +40,26 @@ public:
 class ITwiSlave : public ISlaveAddress, public IMulticastAddress
 {
 public:
-    virtual void init(uint8_t slaveAdress);
-
-    virtual uint8_t getAddress() const;
-    virtual void setAddress(uint8_t addr);
-
-    virtual uint8_t getMulticastAddress() const;
-
+    virtual void init();
+    virtual void init(I2CAddress slaveAdress);
     virtual void onEventHandler(IServer * server);
+    virtual I2CAddress getAddress() const;
+    virtual void setAddress(I2CAddress addr);
+
+    virtual I2CAddress getMulticastAddress() const;
 };
 
 class UsiTwiSlave : public IUsiEvent, public ITwiSlave
 {
 public:
-
-    UsiTwiSlave(USI * usi, uint8_t multicastAdress);
+    UsiTwiSlave(USI * usi, I2CAddress multicastAdress);
 
     void init();
-    void init(uint8_t slaveAdress);
+    void init(I2CAddress addr);
 
-    uint8_t getAddress() const;
-    void setAddress(uint8_t addr);
-
-    uint8_t getMulticastAddress() const;
+    I2CAddress getAddress() const;
+    void setAddress(I2CAddress addr);
+    I2CAddress getMulticastAddress() const;
 
     void onEventHandler(IServer * server);
 
@@ -86,8 +84,8 @@ private:
     IServer * server; //upper
     USI * usi;        //lower
 
-    uint8_t slaveAddress;
-    const uint8_t multicastAddress;
+    I2CAddress slaveAddress;
+    const I2CAddress multicastAddress;
 
     volatile TwiSlaveState overflowState;
     volatile uint8_t startCounter;

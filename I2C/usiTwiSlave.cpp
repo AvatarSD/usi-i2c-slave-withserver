@@ -2,7 +2,7 @@
 #include "usiTwiSlave.h"
 
 
-UsiTwiSlave::UsiTwiSlave(USI * usi, uint8_t multicastAdress) : usi(usi),
+UsiTwiSlave::UsiTwiSlave(USI * usi, I2CAddress multicastAdress) : usi(usi),
     multicastAddress(multicastAdress)
 {
     startCounter = 0;
@@ -16,17 +16,17 @@ void UsiTwiSlave::onEventHandler(IServer * server)
     this->server = server;
 }
 
-uint8_t UsiTwiSlave::getAddress() const
+I2CAddress UsiTwiSlave::getAddress() const
 {
     return slaveAddress;
 }
 
-void UsiTwiSlave::setAddress(uint8_t addr)
+void UsiTwiSlave::setAddress(I2CAddress addr)
 {
     slaveAddress = addr;
 }
 
-uint8_t UsiTwiSlave::getMulticastAddress() const
+I2CAddress UsiTwiSlave::getMulticastAddress() const
 {
     return multicastAddress;
 }
@@ -42,9 +42,9 @@ void UsiTwiSlave::init()
     usi->enableSCLOpenDrain();
 }
 
-void UsiTwiSlave::init(uint8_t slaveAdress)
+void UsiTwiSlave::init(I2CAddress addr)
 {
-    setAddress(slaveAdress);
+    setAddress(addr);
     init();
 }
 
