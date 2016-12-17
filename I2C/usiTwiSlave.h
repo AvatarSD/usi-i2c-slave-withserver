@@ -44,10 +44,6 @@ public:
 
     virtual void init();
     virtual void onEventHandler(IServer * server);
-    virtual I2CAddress getAddress() const;
-    virtual void setAddress(I2CAddress addr);
-
-    virtual I2CAddress getMulticastAddress() const;
 
 protected:
     ISlaveAddress * memory;
@@ -60,17 +56,16 @@ public:
                 ISlaveAddress * memory,
                 I2CAddress multicastAdress);
 
-    void init();
+    void init() final;
+    void onEventHandler(IServer * server) final;
 
-    I2CAddress getAddress() const;
-    void setAddress(I2CAddress addr);
-    I2CAddress getMulticastAddress() const;
-
-    void onEventHandler(IServer * server);
+    void setAddress(I2CAddress addr) final;
+    I2CAddress getAddress() const final;
+    I2CAddress getMulticastAddress() const final;
 
     // port side handlers
-    void startConditionHandler() override;
-    void overflowHandler() override;
+    void startConditionHandler() final;
+    void overflowHandler() final;
 
 private:
     enum TwiSlaveState {
@@ -104,11 +99,6 @@ private:
     // soft side handlers
     int16_t requestCall(uint8_t);
     int8_t receiveCall(uint8_t num, uint8_t data);
-
 };
-
-
-
-
 
 #endif

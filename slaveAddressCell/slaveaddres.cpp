@@ -1,7 +1,7 @@
 #include "slaveaddres.h"
 
 int16_t SlaveAddress::newAddr = ERR;
-ISlaveAddress * SlaveAddress::iaddress;
+ISlaveAddress * SlaveAddress::iaddress = nullptr;
 
 Error SlaveAddress::write(Address addr, uint8_t data, Num num)
 {
@@ -11,7 +11,7 @@ Error SlaveAddress::write(Address addr, uint8_t data, Num num)
 
 ReadType SlaveAddress::read(Address addr, Num num)
 {
-    if(!iaddress) {
+    if(iaddress != nullptr) {
         if(newAddr != ERR)
             iaddress->setAddress(newAddr);
         newAddr = ERR;
@@ -24,9 +24,4 @@ ReadType SlaveAddress::read(Address addr, Num num)
 void SlaveAddress::setISlaveAddress(ISlaveAddress * iAddress)
 {
     iaddress = iAddress;
-}
-
-ISlaveAddress * SlaveAddress::getISlaveAddress()
-{
-    return iaddress;
 }

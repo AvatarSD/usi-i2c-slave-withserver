@@ -24,8 +24,8 @@ enum ClockMode {
 class IUsiEvent
 {
 public:
-    virtual void startConditionHandler() {}
-    virtual void overflowHandler() {}
+    virtual void startConditionHandler();
+    virtual void overflowHandler();
 };
 
 
