@@ -27,33 +27,26 @@ public:
 class IServer
 {
 public:
-    virtual int8_t onReceiver(uint8_t, uint8_t)
-    {
-        return ERR;
-    }
-    virtual int16_t onRequest(uint8_t)
-    {
-        return ERR;
-    }
+    virtual int8_t onReceiver(uint8_t, uint8_t);
+    virtual int16_t onRequest(uint8_t);
 };
 
 class ITwiSlave : public ISlaveAddress, public IMulticastAddress
 {
 public:
-    ITwiSlave(ISlaveAddress * memory);
-
+    ITwiSlave(IServer * server, ISlaveAddress * memory);
     virtual void init();
-    virtual void onEventHandler(IServer * server);
 
 protected:
     ISlaveAddress * memory;
+    IServer * server;
 };
 
 //for testing routine
 class SlaveAddressKeeper : public ISlaveAddress
 {
 public:
-    AddrMemory(I2CAddress addr) : addr(addr) {}
+    SlaveAddressKeeper(I2CAddress addr) : addr(addr) {}
     void setAddress(I2CAddress addr)
     {
         this->addr = addr;
@@ -70,11 +63,11 @@ class UsiTwiSlave : public IUsiEvent, public ITwiSlave
 {
 public:
     UsiTwiSlave(USI * usi,
+                IServer * server,
                 ISlaveAddress * memory,
                 I2CAddress multicastAdress);
 
     void init() final;
-    void onEventHandler(IServer * server) final;
 
     void setAddress(I2CAddress addr) final;
     I2CAddress getAddress() const final;
@@ -98,8 +91,7 @@ private:
         GET_DATA_AND_SEND_ACK = 0x05
     };
 
-    IServer * server; //upper
-    USI * usi;        //lower
+    USI * usi;
 
     I2CAddress slaveAddress;
     const I2CAddress multicastAddress;
@@ -113,9 +105,6 @@ private:
     void SET_USI_TO_SEND_DATA();
     void SET_USI_TO_READ_DATA();
 
-    // soft side handlers
-    int16_t requestCall(uint8_t);
-    int8_t receiveCall(uint8_t num, uint8_t data);
 };
 
 #endif

@@ -2,8 +2,8 @@
 #define I2C_SERVER_H
 
 #include <inttypes.h>
-#include "../I2C/usiTwiSlave.h"
-
+#include "usiTwiSlave.h"
+#include <polymorphmemory.h>
 
 class IMemory
 {
@@ -13,22 +13,18 @@ public:
     virtual uint16_t size();
 };
 
-
-
 class I2CSlaveServer : public IServer
 {
 public:
-    I2CSlaveServer(ITwiSlave * net, IMemory * memory);
+    I2CSlaveServer(IMemory * memory);
 
     IMemory * getMemoryObject();
-    ITwiSlave * getNetworkObject();
 
 private:
     int8_t onReceiver(uint8_t num, uint8_t data) override;
     int16_t onRequest(uint8_t num)  override;
 
     IMemory * memory;
-    ITwiSlave * network;
 
     // Tracks the current register pointer position
     const uint16_t reg_size;

@@ -4,16 +4,18 @@
 
 
 
-ITwiSlave::ITwiSlave(ISlaveAddress * memory) : memory(memory)
+ITwiSlave::ITwiSlave(IServer * server, ISlaveAddress * memory) : memory(memory),
+    server(server)
 {
 
 }
 
 
 UsiTwiSlave::UsiTwiSlave(USI * usi,
+                         IServer * server,
                          ISlaveAddress * memory,
                          I2CAddress multicastAdress) :
-    ITwiSlave(memory),
+    ITwiSlave(server, memory),
     usi(usi),
     multicastAddress(multicastAdress),
     startCounter(0)
@@ -26,11 +28,6 @@ void UsiTwiSlave::setAddress(I2CAddress addr)
 {
     slaveAddress = addr;
     memory->setAddress(addr);
-}
-
-void UsiTwiSlave::onEventHandler(IServer * server)
-{
-    this->server = server;
 }
 
 I2CAddress UsiTwiSlave::getAddress() const
@@ -188,7 +185,7 @@ void UsiTwiSlave::overflowHandler()
             break;
         }
 
-        int16_t tmp = requestCall(startCounter++);
+        int16_t tmp = server->onRequest(startCounter++);
         if(tmp >= 0)
             usi->data = tmp;
         else {
@@ -230,7 +227,7 @@ void UsiTwiSlave::overflowHandler()
 
     // copy data from USIDR and send ACK
     case GET_DATA_AND_SEND_ACK:
-        if(receiveCall(startCounter++, dataRegBuff) < 0) {
+        if(server->onReceiver(startCounter++, dataRegBuff) < 0) {
             SET_USI_TO_TWI_START_CONDITION_MODE();
             return;
         }
@@ -240,19 +237,4 @@ void UsiTwiSlave::overflowHandler()
 
         /***************************************************************************************/
     }
-}
-
-
-int8_t UsiTwiSlave::receiveCall(uint8_t num, uint8_t data)
-{
-    if(server)
-        return server->onReceiver(num, data);
-    return ERR;
-}
-
-int16_t UsiTwiSlave::requestCall(uint8_t num)
-{
-    if(server)
-        return server->onRequest(num);
-    return ERR;
 }

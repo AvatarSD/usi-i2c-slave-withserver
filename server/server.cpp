@@ -6,22 +6,15 @@
 #include "server.h"
 
 
-I2CSlaveServer::I2CSlaveServer(ITwiSlave * net,
-                               IMemory * memory) :
-    memory(memory), network(net),
-    reg_size(memory->size()), reg_position(0)
+I2CSlaveServer::I2CSlaveServer(IMemory * memory) :
+    memory(memory), reg_size(memory->size()), reg_position(0)
 {
-    this->network->onEventHandler(this);
+
 }
 
 IMemory * I2CSlaveServer::getMemoryObject()
 {
     return memory;
-}
-
-ITwiSlave * I2CSlaveServer::getNetworkObject()
-{
-    return network;
 }
 
 int16_t I2CSlaveServer::onRequest(uint8_t)
