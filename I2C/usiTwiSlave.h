@@ -49,6 +49,23 @@ protected:
     ISlaveAddress * memory;
 };
 
+//for testing routine
+class SlaveAddressKeeper : public ISlaveAddress
+{
+public:
+    AddrMemory(I2CAddress addr) : addr(addr) {}
+    void setAddress(I2CAddress addr)
+    {
+        this->addr = addr;
+    }
+    I2CAddress getAddress() const
+    {
+        return this->addr;
+    }
+private:
+    I2CAddress addr;
+};
+
 class UsiTwiSlave : public IUsiEvent, public ITwiSlave
 {
 public:
