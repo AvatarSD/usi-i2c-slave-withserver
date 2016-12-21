@@ -21,7 +21,7 @@ ReadType SlaveAddress::read(Address addr, Num num)
     return ERR;
 }
 
-void SlaveAddress::setISlaveAddress(ISlaveAddress * iAddress)
+void SlaveAddress::setNetworkIface(ISlaveAddress * iAddress)
 {
     iaddress = iAddress;
 }

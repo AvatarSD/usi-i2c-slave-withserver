@@ -88,9 +88,10 @@ class CommonShared : public
     Composite<GUID, DeviceName, DeviceSWver, DeviceHWver, SlaveAddress>
 {
 public:
-    static void setSettings(ISettingsGeneral * settings)
+    static void setSettings(ISettingsGeneral * settings, ISlaveAddress * netIface)
     {
         common = settings;
+        SlaveAddress::setNetworkIface(netIface);
     }
 };
 
