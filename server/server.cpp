@@ -7,14 +7,14 @@
 
 
 I2CSlaveServer::I2CSlaveServer(ITwiSlave * net,
-                               IMappedMemory * memory) :
+                               IMemory * memory) :
     memory(memory), network(net),
-    reg_size(memory->mapsize()), reg_position(0)
+    reg_size(memory->size()), reg_position(0)
 {
     this->network->onEventHandler(this);
 }
 
-IMappedMemory * I2CSlaveServer::getMemoryObject()
+IMemory * I2CSlaveServer::getMemoryObject()
 {
     return memory;
 }
