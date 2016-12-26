@@ -6,17 +6,6 @@
 #define GUID_SIZE 16
 #define DEVNAME_SIZE 4
 
-#define readByte(word, addr) ((uint8_t)((word >> (addr * 8)) & 0xFF));
-
-template<typename TypeSize>
-int8_t writeWord(TypeSize & staticReg, uint8_t addr, uint8_t data)
-{
-    if(addr == 0) staticReg = 0;
-    staticReg |= (TypeSize)(data << (addr * 8));
-    if(addr == sizeof(staticReg) - 1) return OK;
-    return ERR;
-}
-
 class ISettingsGeneral
 {
 public:
@@ -29,82 +18,51 @@ public:
 class GUID : public IMemory
 {
 public:
-    GUID(ISettingsGeneral * common) : common(common) {}
+    GUID(ISettingsGeneral * common);
 
-    Error write(Address addr, uint8_t data, Num num) final {
-        return OK;
-    }
-    ReadType read(Address addr, Num num) final {
-        return common->getDeviceGUID(addr);
-    }
-    size_t size() final {
-        return GUID_SIZE;
-    }
+    Error write(Address addr, uint8_t data, Num num) final;
+    ReadType read(Address addr, Num num) final;
+    size_t size() final;
 private:
     ISettingsGeneral * common;
 };
 class DeviceName : public IMemory
 {
 public:
-    DeviceName(ISettingsGeneral * common) : common(common) {}
-    Error write(Address addr, uint8_t data, Num num) final {
-        return OK;
-    }
-    ReadType read(Address addr, Num num = 0) final {
-        return common->getDeviceName(addr);
-    }
-    size_t size() final {
-        return DEVNAME_SIZE;
-    }
+    DeviceName(ISettingsGeneral * common);
+    Error write(Address addr, uint8_t data, Num num) final;
+    ReadType read(Address addr, Num num = 0) final;
+    size_t size() final;
 private:
     ISettingsGeneral * common;
 };
 class DeviceSWver : public IMemory
 {
 public:
-    DeviceSWver(ISettingsGeneral * common) : common(common) {}
-    Error write(Address addr, uint8_t data, Num num) final {
-        return OK;
-    }
-    ReadType read(Address addr, Num num = 0) final {
-        return common->getDeviceSWver(addr);
-    }
-    size_t size() final {
-        return sizeof(uint16_t);
-    }
+    DeviceSWver(ISettingsGeneral * common);
+    Error write(Address addr, uint8_t data, Num num) final;
+    ReadType read(Address addr, Num num = 0) final;
+    size_t size() final;
 private:
     ISettingsGeneral * common;
 };
 class DeviceHWver : public IMemory
 {
 public:
-    DeviceHWver(ISettingsGeneral * common) : common(common) {}
-    Error write(Address addr, uint8_t data, Num num) final {
-        return OK;
-    }
-    ReadType read(Address addr, Num num = 0) final {
-        return common->getDeviceHWver(addr);
-    }
-    size_t size() final {
-        return sizeof(uint16_t);
-    }
+    DeviceHWver(ISettingsGeneral * common);
+    Error write(Address addr, uint8_t data, Num num) final;
+    ReadType read(Address addr, Num num = 0) final;
+    size_t size() final;
 private:
     ISettingsGeneral * common;
 };
 
-class CommonShared : public
-    Composite<GUID, DeviceName, DeviceSWver, DeviceHWver, SlaveAddress>
+class CommonShared :
+    public Composite<GUID, DeviceName, DeviceSWver, DeviceHWver, SlaveAddress>
 {
 public:
-    CommonShared(ISettingsGeneral * settings) :
-        Composite(&guid, &devname, &devsw, &devhw, &addr),
-        guid(settings), devname(settings), devsw(settings), devhw(settings)
-
-    {}
-    void setNetworkObject(ISlaveAddress * netIface)
-    {
-        addr.setNetworkObject(netIface);
-    }
+    CommonShared(ISettingsGeneral * settings);
+    void setNetworkObject(ISlaveAddress * netIface);
 
 private:
     GUID  guid;
