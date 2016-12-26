@@ -48,7 +48,7 @@ public:
     Error write(Address addr, uint8_t data, Num num) final;
     ReadType read(Address addr, Num num = 0) final;
     size_t size() final;
-    void setNetworkObject(ISlaveAddress * netIface);
+    void setNetworkObject(ISlaveAddress * iAddress);
 private:
     int16_t newAddr;
     ISlaveAddress * iaddress;

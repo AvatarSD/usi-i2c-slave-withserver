@@ -2,10 +2,8 @@
 
 SlaveAddress::SlaveAddress() : newAddr(ERR), iaddress(nullptr) {}
 
-SlaveAddress::SlaveAddress(ISlaveAddress * iaddress) :
-    iaddress(iaddress)
-{
-}
+SlaveAddress::SlaveAddress(ISlaveAddress * iaddress) : newAddr(ERR),
+    iaddress(iaddress) {}
 
 Error SlaveAddress::write(Address addr, uint8_t data, Num num)
 {
@@ -30,7 +28,7 @@ size_t SlaveAddress::size()
     return sizeof(uint8_t);
 }
 
-void SlaveAddress::setNetworkObject(ISlaveAddress * netIface)
+void SlaveAddress::setNetworkObject(ISlaveAddress * iAddress)
 {
-    iaddress = netIface;
+    iaddress = iAddress;
 }

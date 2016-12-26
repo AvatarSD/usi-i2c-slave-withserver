@@ -179,7 +179,9 @@ void UsiTwiSlave::overflowHandler()
     // master sent an ACK
     // copy data from buffer to USIDR and set USI to shift byte
     case SEND_DATA: {
-        //if master want read by multicast address and slave addres was set previousli - do not ask
+        /*if master want read by multicast address and
+        slave addres was set previousli - do not ask*/
+        //todo: fail reading on some chips
         if(isLastCallMulticast && (slaveAddress != multicastAddress)) {
             SET_USI_TO_TWI_START_CONDITION_MODE();
             break;
