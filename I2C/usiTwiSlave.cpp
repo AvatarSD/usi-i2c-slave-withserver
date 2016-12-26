@@ -182,10 +182,10 @@ void UsiTwiSlave::overflowHandler()
         /*if master want read by multicast address and
         slave addres was set previousli - do not ask*/
         //todo: fail reading on some chips
-        if(isLastCallMulticast && (slaveAddress != multicastAddress)) {
-            SET_USI_TO_TWI_START_CONDITION_MODE();
-            break;
-        }
+        //        if(isLastCallMulticast && (slaveAddress != multicastAddress)) {
+        //            SET_USI_TO_TWI_START_CONDITION_MODE();
+        //            break;
+        //        }
 
         int16_t tmp = server->onRequest(startCounter++);
         if(tmp >= 0)
