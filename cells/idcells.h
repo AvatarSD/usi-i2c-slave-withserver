@@ -3,13 +3,8 @@
 
 #include <slaveaddres.h>
 
-
 #define GUID_SIZE 16
 #define DEVNAME_SIZE 4
-#define DEV_NAME {'a', 'h', 't', 'r'}
-#define DEV_SW_VER VER(1, 5)
-#define DEV_HW_VER VER(0, 1)
-
 
 #define readByte(word, addr) ((uint8_t)((word >> (addr * 8)) & 0xFF));
 
@@ -22,77 +17,101 @@ int8_t writeWord(TypeSize & staticReg, uint8_t addr, uint8_t data)
     return ERR;
 }
 
-
 class ISettingsGeneral
 {
 public:
-    //ISettingsGeneral
     virtual uint8_t getDeviceGUID(uint8_t pos) const;
     virtual uint8_t getDeviceName(uint8_t pos) const;
     virtual uint8_t getDeviceSWver(uint8_t pos) const;
     virtual uint8_t getDeviceHWver(uint8_t pos) const;
 };
 
-extern ISettingsGeneral * common;
-
-class GUID : public Composite<uint8_t[GUID_SIZE]>
+class GUID : public IMemory
 {
 public:
-    static Error write(Address addr, uint8_t data, Num num)
-    {
+    GUID(ISettingsGeneral * common) : common(common) {}
+
+    Error write(Address addr, uint8_t data, Num num) final {
         return OK;
     }
-    static ReadType read(Address addr, Num num)
-    {
+    ReadType read(Address addr, Num num) final {
         return common->getDeviceGUID(addr);
     }
+    size_t size() final {
+        return GUID_SIZE;
+    }
+private:
+    ISettingsGeneral * common;
 };
-class DeviceName : public Composite<uint8_t[DEVNAME_SIZE]>
+class DeviceName : public IMemory
 {
 public:
-    static Error write(Address addr, uint8_t data, Num num)
-    {
+    DeviceName(ISettingsGeneral * common) : common(common) {}
+    Error write(Address addr, uint8_t data, Num num) final {
         return OK;
     }
-    static ReadType read(Address addr, Num num = 0)
-    {
+    ReadType read(Address addr, Num num = 0) final {
         return common->getDeviceName(addr);
     }
+    size_t size() final {
+        return DEVNAME_SIZE;
+    }
+private:
+    ISettingsGeneral * common;
 };
-class DeviceSWver : public Composite<uint16_t>
+class DeviceSWver : public IMemory
 {
 public:
-    static Error write(Address addr, uint8_t data, Num num)
-    {
+    DeviceSWver(ISettingsGeneral * common) : common(common) {}
+    Error write(Address addr, uint8_t data, Num num) final {
         return OK;
     }
-    static ReadType read(Address addr, Num num = 0)
-    {
+    ReadType read(Address addr, Num num = 0) final {
         return common->getDeviceSWver(addr);
     }
+    size_t size() final {
+        return sizeof(uint16_t);
+    }
+private:
+    ISettingsGeneral * common;
 };
-class DeviceHWver : public Composite<uint16_t>
+class DeviceHWver : public IMemory
 {
 public:
-    static Error write(Address addr, uint8_t data, Num num)
-    {
+    DeviceHWver(ISettingsGeneral * common) : common(common) {}
+    Error write(Address addr, uint8_t data, Num num) final {
         return OK;
     }
-    static ReadType read(Address addr, Num num = 0)
-    {
+    ReadType read(Address addr, Num num = 0) final {
         return common->getDeviceHWver(addr);
     }
+    size_t size() final {
+        return sizeof(uint16_t);
+    }
+private:
+    ISettingsGeneral * common;
 };
 
 class CommonShared : public
     Composite<GUID, DeviceName, DeviceSWver, DeviceHWver, SlaveAddress>
 {
 public:
-    static void setSettings(ISettingsGeneral * settings, ISlaveAddress * netIface)
+    CommonShared(ISettingsGeneral * settings) :
+        Composite(&guid, &devname, &devsw, &devhw, &addr),
+        guid(settings), devname(settings), devsw(settings), devhw(settings)
+
+    {}
+    void setNetworkObject(ISlaveAddress * netIface)
     {
-        common = settings;
-        SlaveAddress::setNetworkIface(netIface);
+        addr.setNetworkObject(netIface);
     }
+
+private:
+    GUID  guid;
+    DeviceName devname;
+    DeviceSWver devsw;
+    DeviceHWver devhw;
+    SlaveAddress addr;
 };
 
 

@@ -1,7 +1,11 @@
 #include "slaveaddres.h"
 
-int16_t SlaveAddress::newAddr = ERR;
-ISlaveAddress * SlaveAddress::iaddress = nullptr;
+SlaveAddress::SlaveAddress() : newAddr(ERR), iaddress(nullptr) {}
+
+SlaveAddress::SlaveAddress(ISlaveAddress * iaddress) :
+    iaddress(iaddress)
+{
+}
 
 Error SlaveAddress::write(Address addr, uint8_t data, Num num)
 {
@@ -21,7 +25,12 @@ ReadType SlaveAddress::read(Address addr, Num num)
     return ERR;
 }
 
-void SlaveAddress::setNetworkIface(ISlaveAddress * iAddress)
+size_t SlaveAddress::size()
 {
-    iaddress = iAddress;
+    return sizeof(uint8_t);
+}
+
+void SlaveAddress::setNetworkObject(ISlaveAddress * netIface)
+{
+    iaddress = netIface;
 }

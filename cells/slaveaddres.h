@@ -40,15 +40,18 @@
  *
  */
 
-class SlaveAddress : public Composite<uint8_t>
+class SlaveAddress : public IMemory
 {
 public:
-    static Error write(Address addr, uint8_t data, Num num);
-    static ReadType read(Address addr, Num num = 0);
-    static void setNetworkIface(ISlaveAddress * iAddress);
+    SlaveAddress();
+    SlaveAddress(ISlaveAddress * iAddress);
+    Error write(Address addr, uint8_t data, Num num) final;
+    ReadType read(Address addr, Num num = 0) final;
+    size_t size() final;
+    void setNetworkObject(ISlaveAddress * netIface);
 private:
-    static int16_t newAddr;
-    static ISlaveAddress * iaddress;
+    int16_t newAddr;
+    ISlaveAddress * iaddress;
 };
 
 #endif // SLAVEADDRES_H

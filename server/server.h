@@ -5,13 +5,6 @@
 #include "usiTwiSlave.h"
 #include <polymorphmemory.h>
 
-class IMemory
-{
-public:
-    virtual int8_t write(uint8_t addr, uint8_t data);
-    virtual int16_t read(uint8_t addr);
-    virtual uint16_t size();
-};
 
 class I2CSlaveServer : public IServer
 {
