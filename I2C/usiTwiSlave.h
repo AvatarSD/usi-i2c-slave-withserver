@@ -81,6 +81,7 @@ private:
 
     volatile TwiSlaveState overflowState;
     volatile uint8_t startCounter;
+    volatile bool isLastCallMulticast;
 
     void SET_USI_TO_TWI_START_CONDITION_MODE();
     void SET_USI_TO_SEND_ACK();

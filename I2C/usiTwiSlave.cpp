@@ -18,7 +18,8 @@ UsiTwiSlave::UsiTwiSlave(USI * usi,
     ITwiSlave(server, memory),
     usi(usi),
     multicastAddress(multicastAdress),
-    startCounter(0)
+    startCounter(0),
+    isLastCallMulticast(false)
 {
     this->usi->setIsrHandler(this);
     slaveAddress = memory->getAddress();
@@ -146,7 +147,6 @@ void UsiTwiSlave::overflowHandler()
     //    }
 
     uint8_t dataRegBuff = usi->data;
-    static bool isLastCallMulticast = false;
 
     switch(overflowState) {
 
