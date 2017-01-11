@@ -139,12 +139,7 @@ void UsiTwiSlave::startConditionHandler()
 
 void UsiTwiSlave::overflowHandler()
 {
-    //todo collision check
 
-    //    if(usi->haveCollision()) {
-    //        SET_USI_TO_TWI_START_CONDITION_MODE();
-    //        return;
-    //    }
 
     uint8_t dataRegBuff = usi->data;
 
@@ -179,13 +174,23 @@ void UsiTwiSlave::overflowHandler()
     // master sent an ACK
     // copy data from buffer to USIDR and set USI to shift byte
     case SEND_DATA: {
+
+        //collision check
+        if(usi->haveCollision()) {
+            SET_USI_TO_TWI_START_CONDITION_MODE();
+            return;
+        }
+
         /*if master want read by multicast address and
         slave addres was set previousli - do not ask*/
-        //todo: fail reading on some chips
-        //        if(isLastCallMulticast && (slaveAddress != multicastAddress)) {
-        //            SET_USI_TO_TWI_START_CONDITION_MODE();
-        //            break;
-        //        }
+        //todo: fail reading on some chips - update:
+        //      reading 0xff - i dont know why
+        //todo: make allow set address in addressCell
+        //      if it match multicast address
+        if(isLastCallMulticast && (slaveAddress != multicastAddress)) {
+            SET_USI_TO_TWI_START_CONDITION_MODE();
+            break;
+        }
 
         int16_t tmp = server->onRequest(startCounter++);
         if(tmp >= 0)
