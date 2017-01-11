@@ -153,10 +153,18 @@ void UsiTwiSlave::overflowHandler()
 
         isLastCallMulticast = (dataRegBuff == multicastAddress);
 
-        if(isLastCallMulticast || (dataRegBuff == slaveAddress)) {
-            if(rw)
+        if(isLastCallMulticast | (dataRegBuff == slaveAddress)) {
+            if(rw) {
+                //todo: reading by multicast always fail
+                /*if master want read by multicast address and
+                slave addres was set previousli - do not ask*/
+                if(isLastCallMulticast & (slaveAddress != multicastAddress)) {
+                    SET_USI_TO_TWI_START_CONDITION_MODE();
+                    break;
+                }
+
                 overflowState = SEND_DATA;  // master want reading - transmitting
-            else
+            } else
                 overflowState = RECEIVE_DATA; // master want writing - receiving
 
             SET_USI_TO_SEND_ACK();
@@ -174,18 +182,10 @@ void UsiTwiSlave::overflowHandler()
     // copy data from buffer to USIDR and set USI to shift byte
     case SEND_DATA: {
 
-        //collision check
+        //todo: collision check - not work at multicast
         if(usi->haveCollision()) {
             SET_USI_TO_TWI_START_CONDITION_MODE();
             return;
-        }
-
-        //todo: reading by multicast 0xff - i dont know why
-        /*if master want read by multicast address and
-        slave addres was set previousli - do not ask*/
-        if(isLastCallMulticast && (slaveAddress != multicastAddress)) {
-            SET_USI_TO_TWI_START_CONDITION_MODE();
-            break;
         }
 
         int16_t tmp = server->onRequest(startCounter++);
