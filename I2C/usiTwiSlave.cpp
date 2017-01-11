@@ -13,11 +13,10 @@ ITwiSlave::ITwiSlave(IServer * server, ISlaveAddress * memory) : memory(memory),
 
 UsiTwiSlave::UsiTwiSlave(USI * usi,
                          IServer * server,
-                         ISlaveAddress * memory,
-                         I2CAddress multicastAdress) :
+                         ISlaveAddress * memory) :
     ITwiSlave(server, memory),
     usi(usi),
-    multicastAddress(multicastAdress),
+    multicastAddress(memory->getMulticastAddress()),
     startCounter(0),
     isLastCallMulticast(false)
 {
@@ -181,12 +180,9 @@ void UsiTwiSlave::overflowHandler()
             return;
         }
 
+        //todo: reading by multicast 0xff - i dont know why
         /*if master want read by multicast address and
         slave addres was set previousli - do not ask*/
-        //todo: fail reading on some chips - update:
-        //      reading 0xff - i dont know why
-        //todo: make allow set address in addressCell
-        //      if it match multicast address
         if(isLastCallMulticast && (slaveAddress != multicastAddress)) {
             SET_USI_TO_TWI_START_CONDITION_MODE();
             break;

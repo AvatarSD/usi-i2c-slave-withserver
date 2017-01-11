@@ -7,20 +7,28 @@ SlaveAddress::SlaveAddress(ISlaveAddress * iaddress) : newAddr(ERR),
 
 Error SlaveAddress::write(Address addr, uint8_t data, Num num)
 {
-    newAddr = data;
+    if(iaddress == nullptr) {
+        newAddr = ERR;
+        return ERR;
+    }
+    if(iaddress->getMulticastAddress() == data) {
+        iaddress->setAddress(newAddr);
+        newAddr = ERR;
+    } else
+        newAddr = data;
     return OK;
 }
 
 ReadType SlaveAddress::read(Address addr, Num num)
 {
-    if(iaddress != nullptr) {
-        if(newAddr != ERR)
-            iaddress->setAddress(newAddr);
+    if(iaddress == nullptr) {
         newAddr = ERR;
-        return iaddress->getAddress();
+        return ERR;
     }
+    if(newAddr != ERR)
+        iaddress->setAddress(newAddr);
     newAddr = ERR;
-    return ERR;
+    return iaddress->getAddress();
 }
 
 size_t SlaveAddress::size()

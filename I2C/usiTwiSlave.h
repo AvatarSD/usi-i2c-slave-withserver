@@ -16,13 +16,9 @@ class ISlaveAddress
 public:
     virtual void setAddress(I2CAddress addr);
     virtual I2CAddress getAddress() const;
-};
-
-class IMulticastAddress
-{
-public:
     virtual I2CAddress getMulticastAddress() const;
 };
+
 
 class IServer
 {
@@ -31,7 +27,7 @@ public:
     virtual int16_t onRequest(uint8_t);
 };
 
-class ITwiSlave : public ISlaveAddress, public IMulticastAddress
+class ITwiSlave : public ISlaveAddress
 {
 public:
     ITwiSlave(IServer * server, ISlaveAddress * memory);
@@ -47,8 +43,7 @@ class UsiTwiSlave : public IUsiEvent, public ITwiSlave
 public:
     UsiTwiSlave(USI * usi,
                 IServer * server,
-                ISlaveAddress * memory,
-                I2CAddress multicastAdress);
+                ISlaveAddress * memory);
 
     void init() final;
 
